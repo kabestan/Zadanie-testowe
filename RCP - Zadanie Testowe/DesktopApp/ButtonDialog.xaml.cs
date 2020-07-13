@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,11 +19,24 @@ namespace DesktopApp
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class ButtonDialog : Window
     {
-        public MainWindow()
+        public ButtonDialog()
         {
             InitializeComponent();
+        }
+
+        public ButtonDialog(string textMessage, string buttonLabel)
+        {
+            InitializeComponent();
+
+            TheText.Text = textMessage;
+            TheButton.Content = buttonLabel;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }
