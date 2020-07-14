@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using CommonCode;
+using System.Data.SqlClient;
 
 namespace DesktopApp
 {
@@ -23,6 +24,9 @@ namespace DesktopApp
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
             new ButtonDialog("Hello there. Select file to import...", "Select").ShowDialog();
+
+            DatabaseOperator DBOp = new DatabaseOperator();
+
             ImportFile();
         }
 
