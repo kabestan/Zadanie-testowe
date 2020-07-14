@@ -25,12 +25,12 @@ namespace DesktopApp
 
             new ButtonDialog("Hello there. Select file to import...", "Select").ShowDialog();
 
-            DatabaseOperator DBOp = new DatabaseOperator();
+            DatabaseOperator db = new DatabaseOperator();
 
-            ImportFile();
+            ImportFile(db);
         }
 
-        private void ImportFile()
+        private void ImportFile(DatabaseOperator db)
         {
             OpenFileDialog selectFile = new OpenFileDialog
             {
@@ -42,32 +42,26 @@ namespace DesktopApp
 
             var file = new StreamReader(selectFile.OpenFile());
 
+            uint linesInFile = 0;
             uint recordsParsed = 0;
             uint recordsImported = 0;
             while (true)
             {
                 string line = file.ReadLine();
                 if (line == null) break;
-                if (ValidateLogLine(line) == false) continue;
-                //parse
+                linesInFile++;
+
+                Record record = Record.CreateFromString(line);
+                if (record == null) continue;
                 recordsParsed++;
-                //insert
+
+                if (db.UploadRecord(record) == false) continue;
                 recordsImported++;
             }
 
-            new ButtonDialog(String.Format("Parsed and imported {0} records.", recordsParsed), "Ok").ShowDialog();
+            new ButtonDialog(String.Format("Of {0} lines in file, {1} was parsed and {2} imported.", linesInFile, recordsParsed, recordsImported), "Ok").ShowDialog();
 
             Shutdown();
-        }
-
-        private bool ValidateLogLine(string line)
-        {
-            return true;
-        }
-
-        private void ParseLogLine(string line) 
-        {
-
         }
 
         static private void log(object o)
