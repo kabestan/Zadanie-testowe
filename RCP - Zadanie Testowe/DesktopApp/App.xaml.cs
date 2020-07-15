@@ -21,13 +21,11 @@ namespace DesktopApp
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
-            new ButtonDialog("Hello there. Select file to import...", "Select").ShowDialog();
-
             DatabaseOperator db = new DatabaseOperator();
-
-            ImportFile(db);
+            MainWindow mainWindow = new MainWindow();
+            mainWindow.ImportButton.Click += (a, b) => { ImportFile(db); };
+            mainWindow.ReportButton.Click += (a, b) => { Debug.WriteLine("Not implemented."); };
+            mainWindow.Show();
         }
 
         private void ImportFile(DatabaseOperator db)
@@ -38,7 +36,7 @@ namespace DesktopApp
                 Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*"
             };
 
-            if (selectFile.ShowDialog() != true) { Shutdown(); return; }
+            if (selectFile.ShowDialog() != true) { return; }
 
             int linesInFile = CountLines(selectFile.OpenFile()); ;
             int recordsParsed = 0;
@@ -52,12 +50,11 @@ namespace DesktopApp
                     if (records.Count <= 0) break;
                     recordsParsed += records.Count;
                     recordsImported += db.UploadRecords(records);
+                    Debug.WriteLine(recordsImported);
                     if (records.Count < limitRecordsBatchList) break;
                 }
 
             new ButtonDialog(String.Format("Of {0} lines in file, {1} was parsed and {2} imported.", linesInFile, recordsParsed, recordsImported), "Ok").ShowDialog();
-
-            Shutdown();
         }
 
         private List<Record> ReadRecordsToList(int count, StreamReader reader)
@@ -74,11 +71,6 @@ namespace DesktopApp
                 list.Add(record);
             }
             return list;
-        }
-
-        static private void log(object o)
-        {
-            System.Diagnostics.Debug.WriteLine(o);
         }
 
         static private int CountLines(Stream stream)
