@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
@@ -11,6 +12,9 @@ namespace CommonCode
         private const string dbName = "RCPdb";
         private string connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
 
+        /// <summary>
+        /// Create object which controls connection to database.
+        /// </summary>
         public DatabaseOperator()
         {
             Connect((command) =>
@@ -23,6 +27,23 @@ namespace CommonCode
                 }
                 connectionString += ";Initial Catalog=" + dbName;
             });
+        }
+
+        /// <summary>
+        /// Converts list of records to one string query and sends to server.
+        /// </summary>
+        /// <param name="records">List of records to send.</param>
+        /// <returns>Number of affected rows.</returns>
+        public int UploadRecords(List<Record> records)
+        {
+            string query = records.Select(ConvertRecordToInsert).Aggregate((a, b) => a + b);
+            int affectedRows = 0;
+            Connect((command) =>
+            {
+                command.CommandText = query;
+                affectedRows = command.ExecuteNonQuery();
+            });
+            return affectedRows;
         }
 
         private void Connect(Action<SqlCommand> callback)
@@ -77,22 +98,15 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
             command.ExecuteNonQuery();
         }
 
-        public bool UploadRecord(Record record)
+        private string ConvertRecordToInsert(Record record)
         {
-            bool success = true;
-            Connect((command) =>
-            {
-                command.CommandText = String.Format(
-@"INSERT INTO dbo.RCPlogs (Timestamp, WorkerId, ActionType, LoggerType) 
-VALUES ('{0}', {1}, {2}, {3});", 
-                    record.Timestamp.ToString(), 
-                    record.WorkerId.ToString(), 
-                    ((int)record.ActionType).ToString(),
-                    ((int)record.LoggerType).ToString());
-
-                if (command.ExecuteNonQuery() != 1) { success = false; }
-            });
-            return success;
+            return String.Format(
+                @"INSERT INTO [dbo].[RCPlogs] ([Timestamp], [WorkerId], [ActionType], [LoggerType]) VALUES ('{0}', {1}, {2}, {3}) ",
+                record.Timestamp.ToString(),
+                record.WorkerId.ToString(),
+                ((int)record.ActionType).ToString(),
+                ((int)record.LoggerType).ToString()
+            );
         }
     }
 
