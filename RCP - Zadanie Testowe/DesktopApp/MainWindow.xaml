@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DesktopApp"
         mc:Ignorable="d"
-        Title="MainWindow" d:DesignHeight="227.203" d:DesignWidth="304.903" ResizeMode="NoResize" Width="300" Height="200">
+        Title="RCP" d:DesignHeight="227.203" d:DesignWidth="304.903" ResizeMode="NoResize" Width="300" Height="200">
     <Window.Background>
         <LinearGradientBrush EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0">
             <GradientStop Color="#FF878787" Offset="1"/>

@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CommonCode
 {
@@ -17,7 +17,7 @@ namespace CommonCode
         /// </summary>
         public DatabaseOperator()
         {
-            Connect((command) =>
+            Task dupsk(SqlCommand command)
             {
                 if (DatabaseExists(command) == false)
                 {
@@ -26,7 +26,9 @@ namespace CommonCode
                     CreateTable(command);
                 }
                 connectionString += ";Initial Catalog=" + dbName;
-            });
+                return Task.CompletedTask;
+            }
+            Connect(dupsk).Wait();
         }
 
         /// <summary>
@@ -34,26 +36,26 @@ namespace CommonCode
         /// </summary>
         /// <param name="records">List of records to send.</param>
         /// <returns>Number of affected rows.</returns>
-        public int UploadRecords(List<Record> records)
+        public async Task<int> UploadRecords(List<Record> records)
         {
             string query = records.Select(ConvertRecordToInsert).Aggregate((a, b) => a + b);
             int affectedRows = 0;
-            Connect((command) =>
+            await Connect(async (command) =>
             {
                 command.CommandText = query;
-                affectedRows = command.ExecuteNonQuery();
+                affectedRows = await command.ExecuteNonQueryAsync();
             });
             return affectedRows;
         }
 
-        private void Connect(Action<SqlCommand> callback)
+        private async Task Connect(Func<SqlCommand, Task> callback)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand command = new SqlCommand("", connection))
                 {
-                    callback(command);
+                    await callback(command);
                 }
             }
         }
@@ -86,7 +88,7 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
 
         private void CreateTable(SqlCommand command)
         {
-            command.CommandText = 
+            command.CommandText =
 @"CREATE TABLE [RCPlogs]
 (
 	[RecordId] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
