@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace DesktopApp
@@ -17,11 +19,24 @@ namespace DesktopApp
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class ButtonDialog : Window
     {
-        public MainWindow()
+        public ButtonDialog()
         {
             InitializeComponent();
+        }
+
+        public ButtonDialog(string textMessage, string buttonLabel)
+        {
+            InitializeComponent();
+
+            TheText.Text = textMessage;
+            TheButton.Content = buttonLabel;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }

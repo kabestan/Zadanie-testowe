@@ -5,8 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DesktopApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="RCP" d:DesignHeight="227.203" d:DesignWidth="304.903" ResizeMode="NoResize" Width="300" Height="200">
+    <Window.Background>
+        <LinearGradientBrush EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0">
+            <GradientStop Color="#FF878787" Offset="1"/>
+            <GradientStop Color="#FFE4E4E4"/>
+        </LinearGradientBrush>
+    </Window.Background>
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="TextField" Margin="10,10,10,0" TextWrapping="Wrap" MinHeight="100" MinWidth="200" Height="132" VerticalAlignment="Top"><Run Text="Hello th"/><Run Text="ere"/><Run Text="."/></TextBlock>
+        <Button x:Name="ImportButton" Content="Import" HorizontalAlignment="Right" Margin="0,0,90,10" Width="75" Height="22" VerticalAlignment="Bottom"/>
+        <Button x:Name="ReportButton" Content="Report" Margin="0,0,10,10" HorizontalAlignment="Right" Width="75" Height="22" VerticalAlignment="Bottom"/>
     </Grid>
 </Window>
