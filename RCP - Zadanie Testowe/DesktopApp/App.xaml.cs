@@ -14,12 +14,10 @@ namespace DesktopApp
     /// </summary>
     public partial class App : Application
     {
-        private DatabaseOperator database;
         private MainWindow mainWindow;
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            database = new DatabaseOperator();
             mainWindow = new MainWindow();
             mainWindow.ImportButton.Click += OnImportButtonClick;
             mainWindow.ReportButton.Click += (a, b) => { Debug.WriteLine("Not implemented."); };
@@ -64,7 +62,7 @@ namespace DesktopApp
                     if (records.Count <= 0) break;
                     recordsParsed += records.Count;
                     ProgressUpdate(recordsParsed / (float)linesInFile);
-                    recordsImported += await database.UploadRecords(records);
+                    recordsImported += await DatabaseOperator.UploadRecords(records);
                     Debug.WriteLine(recordsImported + " - " + middleTime.ElapsedMilliseconds / 1000f);
                     if (records.Count < limitRecordsBatchList) break;
                 }

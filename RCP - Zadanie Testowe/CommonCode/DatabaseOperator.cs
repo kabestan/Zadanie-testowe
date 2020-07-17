@@ -2,33 +2,43 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace CommonCode
 {
-    public class DatabaseOperator
+    public static class DatabaseOperator
     {
         private const string dbName = "RCPdb";
-        private string connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        private static string connectionString = null;
 
-        /// <summary>
-        /// Create object which controls connection to database.
-        /// </summary>
-        public DatabaseOperator()
+        public static async Task InitDatabase()
         {
-            Task dupsk(SqlCommand command)
+            if (connectionString != null) return;
+            connectionString = GetConnectionString();
+            await Connect(async (command) =>
             {
-                if (DatabaseExists(command) == false)
+                if (await DatabaseExists(command) == false)
                 {
-                    CreateDatabaseOnServer(command);
+                    await CreateDatabaseOnServer(command);
                     command.Connection.ChangeDatabase(dbName);
-                    CreateTable(command);
+                    await CreateTable(command);
                 }
                 connectionString += ";Initial Catalog=" + dbName;
-                return Task.CompletedTask;
-            }
-            Connect(dupsk).Wait();
+                return;
+            });
+        }
+
+        private static string GetConnectionString()
+        {
+            return "Data Source=(localdb)\\MSSQLLocalDB;" +
+                "Integrated Security=True;" +
+                "Connect Timeout=30;" +
+                "Encrypt=False;" +
+                "TrustServerCertificate=False;" +
+                "ApplicationIntent=ReadWrite;" +
+                "MultiSubnetFailover=False;";
         }
 
         /// <summary>
@@ -36,9 +46,9 @@ namespace CommonCode
         /// </summary>
         /// <param name="records">List of records to send.</param>
         /// <returns>Number of affected rows.</returns>
-        public async Task<int> UploadRecords(List<Record> records)
+        public static async Task<int> UploadRecords(List<Record> records)
         {
-            string query = records.Select(ConvertRecordToInsert).Aggregate((a, b) => a + b);
+            string query = records.Select(ConvertRecordToInsertQuery).Aggregate((a, b) => a + b);
             int affectedRows = 0;
             await Connect(async (command) =>
             {
@@ -48,11 +58,12 @@ namespace CommonCode
             return affectedRows;
         }
 
-        private async Task Connect(Func<SqlCommand, Task> callback)
+        private static async Task Connect(Func<SqlCommand, Task> callback)
         {
+            await InitDatabase();
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (SqlCommand command = new SqlCommand("", connection))
                 {
                     await callback(command);
@@ -60,7 +71,7 @@ namespace CommonCode
             }
         }
 
-        private bool DatabaseExists(SqlCommand command)
+        private static async Task<bool> DatabaseExists(SqlCommand command)
         {
             command.CommandText = @"
 DECLARE @dbname nvarchar(128)
@@ -70,7 +81,7 @@ SELECT name
 FROM master.dbo.sysdatabases 
 WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
 
-            using (SqlDataReader reader = command.ExecuteReader())
+            using (SqlDataReader reader = await command.ExecuteReaderAsync())
             {
                 while (reader.Read())
                 {
@@ -80,13 +91,13 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
             }
         }
 
-        private void CreateDatabaseOnServer(SqlCommand command)
+        private static async Task CreateDatabaseOnServer(SqlCommand command)
         {
             command.CommandText = "CREATE DATABASE " + dbName;
-            command.ExecuteNonQuery();
+            await command.ExecuteNonQueryAsync();
         }
 
-        private void CreateTable(SqlCommand command)
+        private static async Task CreateTable(SqlCommand command)
         {
             command.CommandText =
 @"CREATE TABLE [RCPlogs]
@@ -97,10 +108,10 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
     [ActionType] TINYINT NOT NULL, 
     [LoggerType] TINYINT NOT NULL
 )";
-            command.ExecuteNonQuery();
+            await command.ExecuteNonQueryAsync();
         }
 
-        private string ConvertRecordToInsert(Record record)
+        private static string ConvertRecordToInsertQuery(Record record)
         {
             return String.Format(
                 @"INSERT INTO [dbo].[RCPlogs] ([Timestamp], [WorkerId], [ActionType], [LoggerType]) VALUES ('{0}', {1}, {2}, {3}) ",
