@@ -30,6 +30,14 @@
                 </DockPanel>
             </StatusBarItem>
         </StatusBar>
-        <DataGrid x:Name="TheGrid" IsReadOnly="true" VerticalScrollBarVisibility="Visible" GridLinesVisibility="Horizontal" FontSize="14"/>
+        <DataGrid x:Name="TheGrid" IsReadOnly="true" VerticalScrollBarVisibility="Visible" GridLinesVisibility="Horizontal" FontSize="14" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding RecordId}" Header="Id" Width="10*"/>
+                <DataGridTextColumn Binding="{Binding Timestamp}" Header="Date" Width="25*"/>
+                <DataGridTextColumn Binding="{Binding WorkerId}" Header="Worker" Width="10*"/>
+                <DataGridTextColumn Binding="{Binding ActionType}" Header="Action" Width="10*"/>
+                <DataGridTextColumn Binding="{Binding LoggerType}" Header="Logger" Width="10*"/>
+            </DataGrid.Columns>
+        </DataGrid>
     </DockPanel>
 </Window>

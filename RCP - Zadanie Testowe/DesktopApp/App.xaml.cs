@@ -33,6 +33,7 @@ namespace DesktopApp
             {
                 mainWindow.TextField.Text = $"Importing... {(progress * 100):0.0}%";
             });
+            OnBrowseButtonClick(s, e);
             mainWindow.ImportButton.IsEnabled = true;
             mainWindow.BrowseButton.IsEnabled = true;
         }

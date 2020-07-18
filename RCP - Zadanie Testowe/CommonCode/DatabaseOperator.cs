@@ -64,6 +64,11 @@ namespace CommonCode
                 command.CommandText += "SELECT * FROM [RCPlogs] WHERE [RecordId] >= @start AND [RecordId] < @start + @count;";
                 
                 var table = new DataTable();
+                table.Columns.Add(new DataColumn("RecordId", typeof(int)));
+                table.Columns.Add(new DataColumn("Timestamp", typeof(DateTime)));
+                table.Columns.Add(new DataColumn("WorkerId", typeof(int)));
+                table.Columns.Add(new DataColumn("ActionType", typeof(Record.Activity)));
+                table.Columns.Add(new DataColumn("LoggerType", typeof(Record.Logger)));
                 table.Load(await command.ExecuteReaderAsync());
                 return table;
             });
