@@ -37,15 +37,10 @@ namespace DesktopApp
             mainWindow.BrowseButton.IsEnabled = true;
         }
 
-        private async void OnBrowseButtonClick(object s, RoutedEventArgs e)
+        private void OnBrowseButtonClick(object s, RoutedEventArgs e)
         {
             mainWindow.Hide();
-            DataViewWindow dataView = new DataViewWindow();
-            new Action(async () =>
-            {
-                dataView.TheGrid.ItemsSource = (await DatabaseOperator.DownloadRecords()).DefaultView;
-                dataView.TheBar.Visibility = Visibility.Hidden;
-            })();
+            DataViewWindow dataView = new DataViewWindow(DatabaseOperator.DownloadRecords);
             dataView.Show();
             dataView.Closed += (a, b) => { mainWindow.Show(); };
         }

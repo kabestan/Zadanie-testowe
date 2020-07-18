@@ -13,23 +13,23 @@
         </LinearGradientBrush>
     </Window.Background>
     <DockPanel>
-        <DockPanel DockPanel.Dock="Top" Height="25" LastChildFill="False">
+        <DockPanel x:Name="TheButtonsPanel" DockPanel.Dock="Top" Height="25" LastChildFill="False">
             <Button Content="Report" ToolTip="Open the report window" Width="75"/>
             <Button Content="&gt;|" ToolTip="Jump to last records" Height="25" Width="25" DockPanel.Dock="Right"/>
             <Button Content="&gt;" ToolTip="Next" Height="25" Width="25" DockPanel.Dock="Right"/>
             <Button Content="N" ToolTip="Navigate to this record" Height="25" Width="25" DockPanel.Dock="Right"/>
-            <TextBox Height="25" ToolTip="Navigate to this record" TextWrapping="NoWrap" Text="111000111000" Width="90" DockPanel.Dock="Right"/>
+            <TextBox x:Name="TheSelectIdTextBox" Height="25" ToolTip="Navigate to this record" TextWrapping="NoWrap" Width="90" DockPanel.Dock="Right"/>
             <Button Content="&lt;" ToolTip="Previous" Height="25" Width="25" DockPanel.Dock="Right"/>
             <Button Content="|&lt;" ToolTip="Jump to First records" Height="25" Width="25" DockPanel.Dock="Right"/>
         </DockPanel>
-        <StatusBar x:Name="TheBar" DockPanel.Dock="Bottom" Height="25">
+        <StatusBar DockPanel.Dock="Bottom" Height="25">
             <StatusBarItem>
-                <ProgressBar Width="100" Height="15" IsIndeterminate="True"/>
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock Text="Loading records..."/>
+                <DockPanel x:Name="TheLoadingPanel">
+                    <ProgressBar Width="100" Height="15" IsIndeterminate="True"/>
+                    <TextBlock Text="Loading records..." Margin="5,0,0,0"/>
+                </DockPanel>
             </StatusBarItem>
         </StatusBar>
-        <DataGrid x:Name="TheGrid" VerticalScrollBarVisibility="Visible"/>
+        <DataGrid x:Name="TheGrid" IsReadOnly="true" VerticalScrollBarVisibility="Visible" GridLinesVisibility="Horizontal" FontSize="14"/>
     </DockPanel>
 </Window>
