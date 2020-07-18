@@ -15,8 +15,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 // TODO: dynamically resize dataGrid columns accordingly;
-// TODO: navigate to record;
-// TODO: navigating arrows;
 
 namespace DesktopApp
 {
@@ -25,11 +23,11 @@ namespace DesktopApp
     /// </summary>
     public partial class DataViewWindow : Window
     {
-        private readonly Func<int, int?, Task<DataTable>> RequestData;
+        private readonly Func<int?, int, Task<DataTable>> RequestData;
         private const int startingIdIncrement = 100;
         private int? currentStartingId;
 
-        public DataViewWindow(Func<int, int?, Task<DataTable>> requestDataDelegate)
+        public DataViewWindow(Func<int?, int, Task<DataTable>> requestDataDelegate)
         {
             InitializeComponent();
 
@@ -37,11 +35,11 @@ namespace DesktopApp
             BindNewDataToGrid();
         }
 
-        private async void BindNewDataToGrid(int count = startingIdIncrement, int? startingId = null)
+        private async void BindNewDataToGrid(int? startingId = null, int count = startingIdIncrement)
         {
             LoadingMode(true);
             {
-                DataTable dataTable = await RequestData(count, startingId);
+                DataTable dataTable = await RequestData(startingId, count);
                 TheGrid.ItemsSource = dataTable.DefaultView;
                 if (dataTable.Rows.Count > 0) 
                 { 
@@ -61,6 +59,43 @@ namespace DesktopApp
         {
             TheButtonsPanel.IsEnabled = !setToOn;
             TheLoadingPanel.Visibility = setToOn ? Visibility.Visible : Visibility.Hidden;
+        }
+
+        private void Button_Click_ToFirst(object sender, RoutedEventArgs e)
+        {
+            BindNewDataToGrid(1);
+        }
+
+        private void Button_Click_Previous(object sender, RoutedEventArgs e)
+        {
+            if (currentStartingId <= 1) return;
+            else if (currentStartingId == null) BindNewDataToGrid();
+            else BindNewDataToGrid(Math.Max(1, (int)currentStartingId - startingIdIncrement));
+        }
+
+        private void Button_Click_Navigate(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TheSelectIdTextBox.Text, out int id))
+            {
+                BindNewDataToGrid(Math.Max(1, id));
+            }
+            else { TheSelectIdTextBox.Text = ""; }
+        }
+
+        private void Button_Click_Next(object sender, RoutedEventArgs e)
+        {
+            if (currentStartingId == null) BindNewDataToGrid();
+            else BindNewDataToGrid((int)currentStartingId + startingIdIncrement);
+        }
+
+        private void Button_Click_Last(object sender, RoutedEventArgs e)
+        {
+            BindNewDataToGrid();
+        }
+
+        private void TheSelectIdTextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Return) { Button_Click_Navigate(sender, e); }
         }
     }
 }

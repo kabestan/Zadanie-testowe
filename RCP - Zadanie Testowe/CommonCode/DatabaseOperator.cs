@@ -51,7 +51,7 @@ namespace CommonCode
             return affectedRows;
         }
 
-        public static async Task<DataTable> DownloadRecords(int howMany = 100, int? startingId = null)
+        public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = 100)
         {
             return await Connect(async (command) =>
             {
@@ -60,7 +60,7 @@ namespace CommonCode
                 if (startingId == null)
                 { command.CommandText += "SET @start = (SELECT MAX([RecordId]) - @count + 1 FROM[RCPlogs]);\n"; }
                 else
-                { command.CommandText += $"@start = {startingId};\n"; }
+                { command.CommandText += $"SET @start = {startingId};\n"; }
                 command.CommandText += "SELECT * FROM [RCPlogs] WHERE [RecordId] >= @start AND [RecordId] < @start + @count;";
                 
                 var table = new DataTable();
