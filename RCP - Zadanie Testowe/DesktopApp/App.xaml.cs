@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 
 namespace DesktopApp
 {
@@ -20,20 +21,33 @@ namespace DesktopApp
         {
             mainWindow = new MainWindow();
             mainWindow.ImportButton.Click += OnImportButtonClick;
-            mainWindow.ReportButton.Click += (a, b) => { Debug.WriteLine("Not implemented."); };
+            mainWindow.BrowseButton.Click += OnBrowseButtonClick;
             mainWindow.Show();
         }
-
+        
         private async void OnImportButtonClick(object s, RoutedEventArgs e)
         {
             mainWindow.ImportButton.IsEnabled = false;
-            mainWindow.ReportButton.IsEnabled = false;
+            mainWindow.BrowseButton.IsEnabled = false;
             await ImportFile((progress) =>
             {
                 mainWindow.TextField.Text = $"Importing... {(progress * 100):0.0}%";
             });
             mainWindow.ImportButton.IsEnabled = true;
-            mainWindow.ReportButton.IsEnabled = true;
+            mainWindow.BrowseButton.IsEnabled = true;
+        }
+
+        private async void OnBrowseButtonClick(object s, RoutedEventArgs e)
+        {
+            mainWindow.Hide();
+            DataViewWindow dataView = new DataViewWindow();
+            new Action(async () =>
+            {
+                dataView.TheGrid.ItemsSource = (await DatabaseOperator.DownloadRecords()).DefaultView;
+                dataView.TheBar.Visibility = Visibility.Hidden;
+            })();
+            dataView.Show();
+            dataView.Closed += (a, b) => { mainWindow.Show(); };
         }
 
         private async Task ImportFile(Action<float> ProgressUpdate)

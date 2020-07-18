@@ -13,7 +13,11 @@ namespace CommonCode
         private const string dbName = "RCPdb";
         private static string connectionString = null;
 
-        public static async Task InitDatabase()
+        /// <summary>
+        /// Ensure that database on server is ready to operate.
+        /// </summary>
+        /// <returns>Asynchronous task that will complete after database initialization.s</returns>
+        private static async Task InitDatabase()
         {
             if (connectionString != null) return;
             connectionString = GetConnectionString();
@@ -28,17 +32,6 @@ namespace CommonCode
                 connectionString += ";Initial Catalog=" + dbName;
                 return;
             });
-        }
-
-        private static string GetConnectionString()
-        {
-            return "Data Source=(localdb)\\MSSQLLocalDB;" +
-                "Integrated Security=True;" +
-                "Connect Timeout=30;" +
-                "Encrypt=False;" +
-                "TrustServerCertificate=False;" +
-                "ApplicationIntent=ReadWrite;" +
-                "MultiSubnetFailover=False;";
         }
 
         /// <summary>
@@ -58,7 +51,34 @@ namespace CommonCode
             return affectedRows;
         }
 
+        public static async Task<DataTable> DownloadRecords(int howMany = 100, int? startingId = null)
+        {
+            return await Connect(async (command) =>
+            {
+                command.CommandText = "DECLARE @start int, @count int;\n";
+                command.CommandText += $"SET @count = {howMany};\n";
+                if (startingId == null)
+                { command.CommandText += "SET @start = (SELECT MAX([RecordId]) - @count + 1 FROM[RCPlogs]);\n"; }
+                else
+                { command.CommandText += $"@start = {startingId};\n"; }
+                command.CommandText += "SELECT * FROM [RCPlogs] WHERE [RecordId] >= @start AND [RecordId] < @start + @count;";
+                
+                var table = new DataTable();
+                table.Load(await command.ExecuteReaderAsync());
+                return table;
+            });
+        }
+
         private static async Task Connect(Func<SqlCommand, Task> callback)
+        {
+            await Connect<object>(async (command) =>
+            {
+                await callback(command);
+                return default;
+            });
+        }
+
+        private static async Task<T> Connect<T>(Func<SqlCommand, Task<T>> callback)
         {
             await InitDatabase();
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -66,7 +86,9 @@ namespace CommonCode
                 await connection.OpenAsync();
                 using (SqlCommand command = new SqlCommand("", connection))
                 {
-                    await callback(command);
+                    var t = callback(command);
+                    Debug.WriteLine($"--- SqlConnection > SqlCommand > CommandText:\n{command.CommandText}");
+                    return await t;
                 }
             }
         }
@@ -93,7 +115,7 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
 
         private static async Task CreateDatabaseOnServer(SqlCommand command)
         {
-            command.CommandText = "CREATE DATABASE " + dbName;
+            command.CommandText = $"CREATE DATABASE {dbName};";
             await command.ExecuteNonQueryAsync();
         }
 
@@ -109,6 +131,17 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
     [LoggerType] TINYINT NOT NULL
 )";
             await command.ExecuteNonQueryAsync();
+        }
+
+        private static string GetConnectionString()
+        {
+            return "Data Source=(localdb)\\MSSQLLocalDB;" +
+                "Integrated Security=True;" +
+                "Connect Timeout=30;" +
+                "Encrypt=False;" +
+                "TrustServerCertificate=False;" +
+                "ApplicationIntent=ReadWrite;" +
+                "MultiSubnetFailover=False;";
         }
 
         private static string ConvertRecordToInsertQuery(Record record)
