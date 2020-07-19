@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 
 namespace DesktopApp
 {
@@ -14,28 +15,35 @@ namespace DesktopApp
     /// </summary>
     public partial class App : Application
     {
-        private DatabaseOperator database;
         private MainWindow mainWindow;
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            database = new DatabaseOperator();
             mainWindow = new MainWindow();
             mainWindow.ImportButton.Click += OnImportButtonClick;
-            mainWindow.ReportButton.Click += (a, b) => { Debug.WriteLine("Not implemented."); };
+            mainWindow.BrowseButton.Click += OnBrowseButtonClick;
             mainWindow.Show();
         }
-
+        
         private async void OnImportButtonClick(object s, RoutedEventArgs e)
         {
             mainWindow.ImportButton.IsEnabled = false;
-            mainWindow.ReportButton.IsEnabled = false;
+            mainWindow.BrowseButton.IsEnabled = false;
             await ImportFile((progress) =>
             {
                 mainWindow.TextField.Text = $"Importing... {(progress * 100):0.0}%";
             });
+            OnBrowseButtonClick(s, e);
             mainWindow.ImportButton.IsEnabled = true;
-            mainWindow.ReportButton.IsEnabled = true;
+            mainWindow.BrowseButton.IsEnabled = true;
+        }
+
+        private void OnBrowseButtonClick(object s, RoutedEventArgs e)
+        {
+            mainWindow.Hide();
+            DataViewWindow dataView = new DataViewWindow(DatabaseOperator.DownloadRecords);
+            dataView.Show();
+            dataView.Closed += (a, b) => { mainWindow.Show(); };
         }
 
         private async Task ImportFile(Action<float> ProgressUpdate)
@@ -64,7 +72,7 @@ namespace DesktopApp
                     if (records.Count <= 0) break;
                     recordsParsed += records.Count;
                     ProgressUpdate(recordsParsed / (float)linesInFile);
-                    recordsImported += await database.UploadRecords(records);
+                    recordsImported += await DatabaseOperator.UploadRecords(records);
                     Debug.WriteLine(recordsImported + " - " + middleTime.ElapsedMilliseconds / 1000f);
                     if (records.Count < limitRecordsBatchList) break;
                 }

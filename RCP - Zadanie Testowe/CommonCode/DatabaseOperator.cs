@@ -2,33 +2,36 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace CommonCode
 {
-    public class DatabaseOperator
+    public static class DatabaseOperator
     {
         private const string dbName = "RCPdb";
-        private string connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        private static string connectionString = null;
 
         /// <summary>
-        /// Create object which controls connection to database.
+        /// Ensure that database on server is ready to operate.
         /// </summary>
-        public DatabaseOperator()
+        /// <returns>Asynchronous task that will complete after database initialization.s</returns>
+        private static async Task InitDatabase()
         {
-            Task dupsk(SqlCommand command)
+            if (connectionString != null) return;
+            connectionString = GetConnectionString();
+            await Connect(async (command) =>
             {
-                if (DatabaseExists(command) == false)
+                if (await DatabaseExists(command) == false)
                 {
-                    CreateDatabaseOnServer(command);
+                    await CreateDatabaseOnServer(command);
                     command.Connection.ChangeDatabase(dbName);
-                    CreateTable(command);
+                    await CreateTable(command);
                 }
                 connectionString += ";Initial Catalog=" + dbName;
-                return Task.CompletedTask;
-            }
-            Connect(dupsk).Wait();
+                return;
+            });
         }
 
         /// <summary>
@@ -36,9 +39,9 @@ namespace CommonCode
         /// </summary>
         /// <param name="records">List of records to send.</param>
         /// <returns>Number of affected rows.</returns>
-        public async Task<int> UploadRecords(List<Record> records)
+        public static async Task<int> UploadRecords(List<Record> records)
         {
-            string query = records.Select(ConvertRecordToInsert).Aggregate((a, b) => a + b);
+            string query = records.Select(ConvertRecordToInsertQuery).Aggregate((a, b) => a + b);
             int affectedRows = 0;
             await Connect(async (command) =>
             {
@@ -48,19 +51,54 @@ namespace CommonCode
             return affectedRows;
         }
 
-        private async Task Connect(Func<SqlCommand, Task> callback)
+        public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = 100)
         {
+            return await Connect(async (command) =>
+            {
+                command.CommandText = "DECLARE @start int, @count int;\n";
+                command.CommandText += $"SET @count = {howMany};\n";
+                if (startingId == null)
+                { command.CommandText += "SET @start = (SELECT MAX([RecordId]) - @count + 1 FROM[RCPlogs]);\n"; }
+                else
+                { command.CommandText += $"SET @start = {startingId};\n"; }
+                command.CommandText += "SELECT * FROM [RCPlogs] WHERE [RecordId] >= @start AND [RecordId] < @start + @count;";
+                
+                var table = new DataTable();
+                table.Columns.Add(new DataColumn("RecordId", typeof(int)));
+                table.Columns.Add(new DataColumn("Timestamp", typeof(DateTime)));
+                table.Columns.Add(new DataColumn("WorkerId", typeof(int)));
+                table.Columns.Add(new DataColumn("ActionType", typeof(Record.Activity)));
+                table.Columns.Add(new DataColumn("LoggerType", typeof(Record.Logger)));
+                table.Load(await command.ExecuteReaderAsync());
+                return table;
+            });
+        }
+
+        private static async Task Connect(Func<SqlCommand, Task> callback)
+        {
+            await Connect<object>(async (command) =>
+            {
+                await callback(command);
+                return default;
+            });
+        }
+
+        private static async Task<T> Connect<T>(Func<SqlCommand, Task<T>> callback)
+        {
+            await InitDatabase();
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (SqlCommand command = new SqlCommand("", connection))
                 {
-                    await callback(command);
+                    var t = callback(command);
+                    Debug.WriteLine($"--- SqlConnection > SqlCommand > CommandText:\n{command.CommandText}");
+                    return await t;
                 }
             }
         }
 
-        private bool DatabaseExists(SqlCommand command)
+        private static async Task<bool> DatabaseExists(SqlCommand command)
         {
             command.CommandText = @"
 DECLARE @dbname nvarchar(128)
@@ -70,7 +108,7 @@ SELECT name
 FROM master.dbo.sysdatabases 
 WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
 
-            using (SqlDataReader reader = command.ExecuteReader())
+            using (SqlDataReader reader = await command.ExecuteReaderAsync())
             {
                 while (reader.Read())
                 {
@@ -80,13 +118,13 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
             }
         }
 
-        private void CreateDatabaseOnServer(SqlCommand command)
+        private static async Task CreateDatabaseOnServer(SqlCommand command)
         {
-            command.CommandText = "CREATE DATABASE " + dbName;
-            command.ExecuteNonQuery();
+            command.CommandText = $"CREATE DATABASE {dbName};";
+            await command.ExecuteNonQueryAsync();
         }
 
-        private void CreateTable(SqlCommand command)
+        private static async Task CreateTable(SqlCommand command)
         {
             command.CommandText =
 @"CREATE TABLE [RCPlogs]
@@ -97,10 +135,21 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
     [ActionType] TINYINT NOT NULL, 
     [LoggerType] TINYINT NOT NULL
 )";
-            command.ExecuteNonQuery();
+            await command.ExecuteNonQueryAsync();
         }
 
-        private string ConvertRecordToInsert(Record record)
+        private static string GetConnectionString()
+        {
+            return "Data Source=(localdb)\\MSSQLLocalDB;" +
+                "Integrated Security=True;" +
+                "Connect Timeout=30;" +
+                "Encrypt=False;" +
+                "TrustServerCertificate=False;" +
+                "ApplicationIntent=ReadWrite;" +
+                "MultiSubnetFailover=False;";
+        }
+
+        private static string ConvertRecordToInsertQuery(Record record)
         {
             return String.Format(
                 @"INSERT INTO [dbo].[RCPlogs] ([Timestamp], [WorkerId], [ActionType], [LoggerType]) VALUES ('{0}', {1}, {2}, {3}) ",
@@ -111,71 +160,4 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
             );
         }
     }
-
-    public class Record
-    {
-        public int? RecordId { get; set; }
-        public DateTime Timestamp { get; set; }
-        public int WorkerId { get; set; }
-        public Activity ActionType { get; set; }
-        public Logger LoggerType { get; set; }
-
-        public enum Activity
-        {
-            Entry = 0,
-            Exit = 1,
-            Service = 5
-        }
-
-        public enum Logger
-        {
-            Fingerprint = 0,
-            Keypad = 1
-            // z wartościami dotyczącymi tego był prawdopodobnie błąd w zadaniu
-        }
-
-        private enum Column
-        {
-            Year = 0,
-            Month,
-            Day,
-            Hour,
-            Minute,
-            Worker,
-            Action,
-            Logger
-        }
-
-        private Record() { }
-
-        public static Record CreateFromString(string rawTextLine)
-        {
-            try
-            {
-                Record record = new Record();
-                int[] fields = rawTextLine.Split("-;".ToCharArray()).Select(int.Parse).ToArray();
-                record.Timestamp = new DateTime(
-                    fields[(int)Column.Year],
-                    fields[(int)Column.Month],
-                    fields[(int)Column.Day],
-                    fields[(int)Column.Hour],
-                    fields[(int)Column.Minute],
-                    0);
-                record.WorkerId = fields[(int)Column.Worker];
-                record.ActionType = (Activity)fields[(int)Column.Action];
-                record.LoggerType = (Logger)fields[(int)Column.Logger];
-                return record;
-            }
-            catch (Exception e)
-            {
-                if (e is IndexOutOfRangeException || e is FormatException || e is NullReferenceException) { return null; }
-                throw;
-            }
-        }
-
-        public static Record CreateFromReader(IDataRecord reader)
-        {
-            throw new NotImplementedException();
-        }
-    }
-}
+ }

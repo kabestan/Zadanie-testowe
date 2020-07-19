@@ -18,6 +18,6 @@
         </Grid.RowDefinitions>
         <TextBlock x:Name="TextField" Margin="10,10,10,0" TextWrapping="Wrap" MinHeight="100" MinWidth="200" Height="132" VerticalAlignment="Top"><Run Text="Hello th"/><Run Text="ere"/><Run Text="."/></TextBlock>
         <Button x:Name="ImportButton" Content="Import" HorizontalAlignment="Right" Margin="0,0,90,10" Width="75" Height="22" VerticalAlignment="Bottom"/>
-        <Button x:Name="ReportButton" Content="Report" Margin="0,0,10,10" HorizontalAlignment="Right" Width="75" Height="22" VerticalAlignment="Bottom"/>
+        <Button x:Name="BrowseButton" Content="Browse" Margin="0,0,10,10" HorizontalAlignment="Right" Width="75" Height="22" VerticalAlignment="Bottom"/>
     </Grid>
 </Window>
