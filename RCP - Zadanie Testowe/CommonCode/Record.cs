@@ -16,7 +16,11 @@ namespace CommonCode
         {
             Entry = 0,
             Exit = 1,
-            Service = 5
+            Service = 5,
+            // poniższe wartości były w pliku ale nie były nazwane w zadaniu
+            unnamed_3 = 3,
+            unnamed_4 = 4, // wygląda jak nieudane wejście palcem
+            unnamed_7 = 7 // wygląda jak nieudane wejście kodem albo wyjście kodem (dotyczy tylko pracownika 11)
         }
 
         public enum Logger
