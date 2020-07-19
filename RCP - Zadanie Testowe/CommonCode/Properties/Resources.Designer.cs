@@ -97,11 +97,36 @@ namespace CommonCode.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to SELECT a.Month FROM
+        ///	(SELECT (CAST(YEAR(Timestamp) AS VARCHAR(4)) + &apos;-&apos; + CAST(MONTH(Timestamp) AS VARCHAR(2))) AS Month FROM RCPdb.dbo.RCPlogs) a
+        ///GROUP BY Month;
+        ///--SELECT * FROM RCPdb.dbo.RCPlogs 
+        ///--ORDER BY Timestamp;.
         /// </summary>
         internal static string GetReport {
             get {
                 return ResourceManager.GetString("GetReport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --DECLARE @t VARCHAR(32), @w INT, @a INT, @l INT;
+        ///--SET @t = &apos;2000-01-01 00:01:00&apos;; SET @w = 1; SET @a = 0; SET @l = 0;
+        ///CREATE PROCEDURE InsertDistinct @t DATETIME, @w INT, @a INT, @l INT
+        ///AS
+        ///	INSERT INTO RCPdb.dbo.RCPlogs (Timestamp, WorkerId, ActionType, LoggerType)
+        ///	SELECT @t, @w, @a, @l WHERE NOT EXISTS 
+        ///	(
+        ///			SELECT null FROM RCPdb.dbo.RCPlogs r WHERE r.Timestamp = @t
+        ///			AND r.WorkerId = @w
+        ///			AND r.ActionType = @a
+        ///			AND r.LoggerType = @l
+        ///	)
+        ///GO;.
+        /// </summary>
+        internal static string InsertDistinctProcedure {
+            get {
+                return ResourceManager.GetString("InsertDistinctProcedure", resourceCulture);
             }
         }
     }

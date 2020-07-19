@@ -30,12 +30,16 @@ namespace CommonCode
             {
                 if (await DatabaseExists(command) == false)
                 {
+                    // Create database and table
                     await CreateDatabaseOnServer(command);
                     command.Connection.ChangeDatabase(dbName);
                     await CreateTable(command);
+
+                    // Store inserting procedure
+                    command.CommandText = Properties.Resources.InsertDistinctProcedure;
+                    await command.ExecuteNonQueryAsync();
                 }
                 connectionString += ";Initial Catalog=" + dbName;
-                return;
             });
         }
 
@@ -161,15 +165,9 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
                 "MultiSubnetFailover=False;";
         }
 
-        private static string ConvertRecordToInsertQuery(Record record)
+        private static string ConvertRecordToInsertQuery(Record r)
         {
-            return String.Format(
-                @"INSERT INTO [dbo].[RCPlogs] ([Timestamp], [WorkerId], [ActionType], [LoggerType]) VALUES ('{0}', {1}, {2}, {3}) ",
-                record.Timestamp.ToString(),
-                record.WorkerId.ToString(),
-                ((int)record.ActionType).ToString(),
-                ((int)record.LoggerType).ToString()
-            );
+             return $"EXEC InsertDistinct @t = '{r.Timestamp}', @w = {r.WorkerId}, @a = {(int)r.ActionType}, @l = {(int)r.LoggerType};\n";
         }
     }
  }
