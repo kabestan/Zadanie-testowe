@@ -7,11 +7,13 @@
   <ItemGroup>
     <None Remove="SQLQueries\BadValues.sql" />
     <None Remove="SQLQueries\GetRecords.sql" />
+    <None Remove="SQLQueries\GetReport.sql" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="SQLQueries\BadValues.sql" />
     <EmbeddedResource Include="SQLQueries\GetRecords.sql" />
+    <EmbeddedResource Include="SQLQueries\GetReport.sql" />
   </ItemGroup>
 
   <ItemGroup>

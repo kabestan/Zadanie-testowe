@@ -85,9 +85,7 @@ namespace CommonCode.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to DECLARE @start int, @count int;
-        ///--SET @count = {howMany};
-        ///--SET @start = {startingId};
+        ///   Looks up a localized string similar to --DECLARE @start int, @count int; SET @start = -1; SET @count = 100;
         ///IF @start &lt; 0
         ///	SET @start = (SELECT MAX([RecordId]) - @count + 1 FROM[RCPlogs]);
         ///SELECT * FROM [RCPlogs] WHERE [RecordId] &gt;= @start AND [RecordId] &lt; @start + @count;.
@@ -95,6 +93,15 @@ namespace CommonCode.Properties {
         internal static string GetRecords {
             get {
                 return ResourceManager.GetString("GetRecords", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string GetReport {
+            get {
+                return ResourceManager.GetString("GetReport", resourceCulture);
             }
         }
     }

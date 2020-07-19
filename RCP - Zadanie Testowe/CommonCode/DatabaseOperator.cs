@@ -6,6 +6,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
+// TODO: refactor database init to one query
+// TODO: move all queries to Resources
+
 namespace CommonCode
 {
     public static class DatabaseOperator
@@ -57,7 +60,9 @@ namespace CommonCode
         {
             return await Connect(async (command) =>
             {
+                command.CommandText = Properties.Resources.GetReport;
                 var report = new DataTable();
+                report.Load(await command.ExecuteReaderAsync());
                 return report;
             });
         }
