@@ -10,6 +10,8 @@ namespace CommonCode
 {
     public static class DatabaseOperator
     {
+        public delegate Task<DataTable> RequestRecords(int? startingId, int count);
+
         private const string dbName = "RCPdb";
         private static string connectionString = null;
 
@@ -49,6 +51,15 @@ namespace CommonCode
                 affectedRows = await command.ExecuteNonQueryAsync();
             });
             return affectedRows;
+        }
+
+        public static async Task<DataTable> CreateReport()
+        {
+            return await Connect(async (command) =>
+            {
+                var report = new DataTable();
+                return report;
+            });
         }
 
         public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = 100)
