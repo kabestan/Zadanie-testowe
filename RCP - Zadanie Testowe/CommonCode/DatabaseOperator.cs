@@ -66,14 +66,10 @@ namespace CommonCode
         {
             return await Connect(async (command) =>
             {
-                command.CommandText = "DECLARE @start int, @count int;\n";
-                command.CommandText += $"SET @count = {howMany};\n";
-                if (startingId == null)
-                { command.CommandText += "SET @start = (SELECT MAX([RecordId]) - @count + 1 FROM[RCPlogs]);\n"; }
-                else
-                { command.CommandText += $"SET @start = {startingId};\n"; }
-                command.CommandText += "SELECT * FROM [RCPlogs] WHERE [RecordId] >= @start AND [RecordId] < @start + @count;";
-                
+                command.CommandText = Properties.Resources.GetRecords;
+                command.Parameters.Add("start", SqlDbType.Int).Value = startingId == null ? -1 : startingId;
+                command.Parameters.Add("count", SqlDbType.Int).Value = howMany;
+
                 var table = new DataTable();
                 table.Columns.Add(new DataColumn("RecordId", typeof(int)));
                 table.Columns.Add(new DataColumn("Timestamp", typeof(DateTime)));
