@@ -69,7 +69,20 @@ namespace CommonCode
 
         public static Record CreateFromReader(IDataRecord reader)
         {
-            throw new NotImplementedException();
+            Func<string, object> getField = (name) =>
+            {
+                return reader[reader.GetOrdinal(name)];
+            };
+
+            Record record = new Record();
+
+            record.RecordId = Convert.ToInt32(getField("RecordId"));
+            record.Timestamp = Convert.ToDateTime(getField("Timestamp"));
+            record.WorkerId = Convert.ToInt32(getField("WorkerId"));
+            record.ActionType = (Activity)Convert.ToInt32(getField("ActionType"));
+            record.LoggerType = (Logger)Convert.ToInt32(getField("LoggerType"));
+
+            return record;
         }
     }
 }
