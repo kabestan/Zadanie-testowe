@@ -73,20 +73,44 @@ namespace CommonCode
 
         public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = 100)
         {
-            return await Connect(async (command) =>
+            return await WrappedRecordsReader(startingId, howMany, async (reader) =>
             {
-                command.CommandText = Properties.Resources.GetRecords;
-                command.Parameters.Add("start", SqlDbType.Int).Value = startingId == null ? -1 : startingId;
-                command.Parameters.Add("count", SqlDbType.Int).Value = howMany;
-
                 var table = new DataTable();
                 table.Columns.Add(new DataColumn("RecordId", typeof(int)));
                 table.Columns.Add(new DataColumn("Timestamp", typeof(DateTime)));
                 table.Columns.Add(new DataColumn("WorkerId", typeof(int)));
                 table.Columns.Add(new DataColumn("ActionType", typeof(Record.Activity)));
                 table.Columns.Add(new DataColumn("LoggerType", typeof(Record.Logger)));
-                table.Load(await command.ExecuteReaderAsync());
+                table.Load(reader);
                 return table;
+            });
+        }
+
+        public static async Task<List<Record>> DownloadRecordsAsList(int? startingId = null, int howMany = 100)
+        {
+            return await WrappedRecordsReader(startingId, howMany, async (reader) =>
+            {
+                var records = new List<Record>();
+                while (await reader.ReadAsync())
+                {
+                    records.Add(Record.CreateFromReader(reader));
+                }
+                return records;
+            });
+        }
+
+        private static async Task<T> WrappedRecordsReader<T>(int? startingId, int howMany, Func<SqlDataReader, Task<T>> operateOnReader)
+        {
+            return await Connect(async (command) =>
+            {
+                command.CommandText = Properties.Resources.GetRecords;
+                command.Parameters.Add("start", SqlDbType.Int).Value = startingId == null ? -1 : startingId;
+                command.Parameters.Add("count", SqlDbType.Int).Value = howMany;
+
+                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    return await operateOnReader(reader);
+                }
             });
         }
 
