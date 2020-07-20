@@ -2,14 +2,19 @@
 
 @{
     ViewData["Title"] = "Log";
-    ViewData["StartingId"] = 1;
 }
 
 <h1>Log</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<form asp-action="Log" method="get">
+    <p>
+        <a asp-action="Log" asp-route-id="@(1)">First</a><span> | </span>
+        <a asp-action="Log" asp-route-id="@ViewData["idPrev"]">Previous</a>
+        <input name="id" type="number" value="@ViewData["idFirst"]" />
+        <a asp-action="Log" asp-route-id="@ViewData["idNext"]">Next</a><span> | </span>
+        <a asp-action="Log" asp-route-id="@(null)">Last</a>
+    </p>
+</form>
 <table class="table">
     <thead>
         <tr>
@@ -28,11 +33,10 @@
             <th>
                 @Html.DisplayNameFor(model => model.LoggerType)
             </th>
-            <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in await CommonCode.DatabaseOperator.DownloadRecordsAsList())
+        @foreach (var item in Model)
         {
             <tr>
                 <td>
@@ -49,11 +53,6 @@
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.LoggerType)
-                </td>
-                <td>
-                    @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                    @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                    @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
                 </td>
             </tr>
         }

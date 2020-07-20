@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
 
@@ -9,11 +10,12 @@ namespace CommonCode
 {
     public class Record
     {
-        public int? RecordId { get; set; }
-        public DateTime Timestamp { get; set; }
-        public int WorkerId { get; set; }
-        public Activity ActionType { get; set; }
-        public Logger LoggerType { get; set; }
+
+        [DisplayName("Id")] public int? RecordId { get; set; }
+        [DisplayName("Date")] public DateTime Timestamp { get; set; }
+        [DisplayName("Employee")] public int WorkerId { get; set; }
+        [DisplayName("Type")] public Activity ActionType { get; set; }
+        [DisplayName("Logger")] public Logger LoggerType { get; set; }
 
         public enum Activity
         {

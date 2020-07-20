@@ -15,6 +15,7 @@ namespace CommonCode
     {
         public delegate Task<DataTable> RequestRecords(int? startingId, int count);
 
+        public const int defaultRecordsIncrement = 100;
         private const string dbName = "RCPdb";
         private static string connectionString = null;
 
@@ -70,7 +71,7 @@ namespace CommonCode
             });
         }
 
-        public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = 100)
+        public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = defaultRecordsIncrement)
         {
             return await WrappedRecordsReader(startingId, howMany, async (reader) =>
             {
@@ -85,7 +86,7 @@ namespace CommonCode
             });
         }
 
-        public static async Task<List<Record>> DownloadRecordsAsList(int? startingId = null, int howMany = 100)
+        public static async Task<List<Record>> DownloadRecordsAsList(int? startingId = null, int howMany = defaultRecordsIncrement)
         {
             return await WrappedRecordsReader(startingId, howMany, async (reader) =>
             {
