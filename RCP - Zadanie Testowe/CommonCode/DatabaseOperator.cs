@@ -40,6 +40,7 @@ namespace CommonCode
                     await command.ExecuteNonQueryAsync();
                 }
                 connectionString += ";Initial Catalog=" + dbName;
+                return Task.FromResult(true);
             });
         }
 
@@ -51,13 +52,11 @@ namespace CommonCode
         public static async Task<int> UploadRecords(List<Record> records)
         {
             string query = records.Select(ConvertRecordToInsertQuery).Aggregate((a, b) => a + b);
-            int affectedRows = 0;
-            await Connect(async (command) =>
+            return await Connect(async (command) =>
             {
                 command.CommandText = query;
-                affectedRows = await command.ExecuteNonQueryAsync();
+                return await command.ExecuteNonQueryAsync();
             });
-            return affectedRows;
         }
 
         public static async Task<DataTable> CreateReport()
@@ -114,16 +113,7 @@ namespace CommonCode
             });
         }
 
-        private static async Task Connect(Func<SqlCommand, Task> callback)
-        {
-            await Connect<object>(async (command) =>
-            {
-                await callback(command);
-                return default;
-            });
-        }
-
-        private static async Task<T> Connect<T>(Func<SqlCommand, Task<T>> callback)
+        private static async Task<T> Connect<T>(Func<SqlCommand, Task<T>> operateOnCommand)
         {
             await InitDatabase();
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -131,7 +121,7 @@ namespace CommonCode
                 await connection.OpenAsync();
                 using (SqlCommand command = new SqlCommand("", connection))
                 {
-                    var t = callback(command);
+                    var t = operateOnCommand(command);
                     Debug.WriteLine($"--- SqlConnection > SqlCommand > CommandText:\n{command.CommandText}");
                     return await t;
                 }

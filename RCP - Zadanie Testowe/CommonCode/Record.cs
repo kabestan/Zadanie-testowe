@@ -2,6 +2,9 @@
 using System.Data;
 using System.Linq;
 
+// TODO: possible refactor: implement cast operators for Record class
+// TODO: change Record.RecordId type int? to int and correct all dependent code
+
 namespace CommonCode
 {
     public class Record
