@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 
 namespace DesktopApp
@@ -17,6 +18,9 @@ namespace DesktopApp
     {
         private MainWindow mainWindow;
 
+        /// <summary>
+        /// Application starting point.
+        /// </summary>
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             mainWindow = new MainWindow();
@@ -42,8 +46,18 @@ namespace DesktopApp
         {
             mainWindow.Hide();
             DataViewWindow dataView = new DataViewWindow(DatabaseOperator.DownloadRecords);
-            dataView.Show();
             dataView.Closed += (a, b) => { mainWindow.Show(); };
+            dataView.TheReportButton.Click += OnReportButtonClick;
+            dataView.Show();
+        }
+
+        private async void OnReportButtonClick(object sender, RoutedEventArgs e)
+        {
+            Button reportButton = sender as Button;
+            reportButton.IsEnabled = false;
+            ReportWindow reportWindow = new ReportWindow(await DatabaseOperator.CreateReport());
+            reportWindow.Closed += (s, f) => { reportButton.IsEnabled = true; };
+            reportWindow.Show();
         }
 
         private async Task ImportFile(Action<float> ProgressUpdate)

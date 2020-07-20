@@ -6,10 +6,15 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
+// TODO: refactor database init to one query
+// TODO: move all queries to Resources
+
 namespace CommonCode
 {
     public static class DatabaseOperator
     {
+        public delegate Task<DataTable> RequestRecords(int? startingId, int count);
+
         private const string dbName = "RCPdb";
         private static string connectionString = null;
 
@@ -25,12 +30,16 @@ namespace CommonCode
             {
                 if (await DatabaseExists(command) == false)
                 {
+                    // Create database and table
                     await CreateDatabaseOnServer(command);
                     command.Connection.ChangeDatabase(dbName);
                     await CreateTable(command);
+
+                    // Store inserting procedure
+                    command.CommandText = Properties.Resources.InsertDistinctProcedure;
+                    await command.ExecuteNonQueryAsync();
                 }
                 connectionString += ";Initial Catalog=" + dbName;
-                return;
             });
         }
 
@@ -51,18 +60,25 @@ namespace CommonCode
             return affectedRows;
         }
 
+        public static async Task<DataTable> CreateReport()
+        {
+            return await Connect(async (command) =>
+            {
+                command.CommandText = Properties.Resources.GetReport;
+                var report = new DataTable();
+                report.Load(await command.ExecuteReaderAsync());
+                return report;
+            });
+        }
+
         public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = 100)
         {
             return await Connect(async (command) =>
             {
-                command.CommandText = "DECLARE @start int, @count int;\n";
-                command.CommandText += $"SET @count = {howMany};\n";
-                if (startingId == null)
-                { command.CommandText += "SET @start = (SELECT MAX([RecordId]) - @count + 1 FROM[RCPlogs]);\n"; }
-                else
-                { command.CommandText += $"SET @start = {startingId};\n"; }
-                command.CommandText += "SELECT * FROM [RCPlogs] WHERE [RecordId] >= @start AND [RecordId] < @start + @count;";
-                
+                command.CommandText = Properties.Resources.GetRecords;
+                command.Parameters.Add("start", SqlDbType.Int).Value = startingId == null ? -1 : startingId;
+                command.Parameters.Add("count", SqlDbType.Int).Value = howMany;
+
                 var table = new DataTable();
                 table.Columns.Add(new DataColumn("RecordId", typeof(int)));
                 table.Columns.Add(new DataColumn("Timestamp", typeof(DateTime)));
@@ -149,15 +165,9 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
                 "MultiSubnetFailover=False;";
         }
 
-        private static string ConvertRecordToInsertQuery(Record record)
+        private static string ConvertRecordToInsertQuery(Record r)
         {
-            return String.Format(
-                @"INSERT INTO [dbo].[RCPlogs] ([Timestamp], [WorkerId], [ActionType], [LoggerType]) VALUES ('{0}', {1}, {2}, {3}) ",
-                record.Timestamp.ToString(),
-                record.WorkerId.ToString(),
-                ((int)record.ActionType).ToString(),
-                ((int)record.LoggerType).ToString()
-            );
+             return $"EXEC InsertDistinct @t = '{r.Timestamp}', @w = {r.WorkerId}, @a = {(int)r.ActionType}, @l = {(int)r.LoggerType};\n";
         }
     }
  }

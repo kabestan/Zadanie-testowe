@@ -1,0 +1,21 @@
+﻿<Window x:Class="DesktopApp.ReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DesktopApp"
+        mc:Ignorable="d"
+        Title="Report" Height="440" Width="270">
+    <DataGrid x:Name="TheGrid" AutoGenerateColumns="False" IsReadOnly="true" GridLinesVisibility="Horizontal">
+        <DataGrid.Resources>
+            <Style TargetType="DataGridCell">
+                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+            </Style>
+        </DataGrid.Resources>
+        <DataGrid.Columns>
+            <DataGridTextColumn Binding="{Binding YearMonth}" Header="Month" Width="90*"/>
+            <DataGridTextColumn Binding="{Binding WorkerId}" Header="Employee" Width="90*"/>
+            <DataGridTextColumn Binding="{Binding TotalHours}" Header="Total Hours" Width="90*"/>
+        </DataGrid.Columns>
+    </DataGrid>
+</Window>

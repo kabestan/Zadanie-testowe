@@ -1,0 +1,5 @@
+przyjęte założenia:
+-dane w pliku wejściowym są nieposortowane i mogą być zduplikowane;
+-podczas obliczania przepracowanego czasu: pracownik może wejść jednego dnia i wyjść innego poza wyjątkiem jeśli w tym czase zmieni się miesiąc;
+-w treści zadania, opisując rodzaje czytnika miały być odpowiednio 0 i 1;
+-obecne w pliku wejściowym typy zdarzenia o wartościach innych niż podane w zadaniu są dla mnie nie istotne (a były to 3, 4, 7);

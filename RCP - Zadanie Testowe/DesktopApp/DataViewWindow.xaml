@@ -14,7 +14,7 @@
     </Window.Background>
     <DockPanel>
         <DockPanel x:Name="TheButtonsPanel" DockPanel.Dock="Top" Height="25" LastChildFill="False">
-            <Button Content="Report" ToolTip="Open the report window" Width="75"/>
+            <Button x:Name="TheReportButton" Content="Report" ToolTip="Open the report window" Width="75"/>
             <Button Content="&gt;|" ToolTip="Jump to last records" Height="25" Width="25" DockPanel.Dock="Right" Click="Button_Click_Last"/>
             <Button Content="&gt;" ToolTip="Next" Height="25" Width="25" DockPanel.Dock="Right" Click="Button_Click_Next"/>
             <Button Content="N" ToolTip="Navigate to this record" Height="25" Width="25" DockPanel.Dock="Right" Click="Button_Click_Navigate"/>
