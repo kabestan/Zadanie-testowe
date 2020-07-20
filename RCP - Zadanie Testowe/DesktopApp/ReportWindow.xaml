@@ -5,11 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DesktopApp"
         mc:Ignorable="d"
-        Title="Report" Height="450" Width="800">
-    <DataGrid x:Name="TheGrid">
+        Title="Report" Height="440" Width="270">
+    <DataGrid x:Name="TheGrid" AutoGenerateColumns="False" IsReadOnly="true" GridLinesVisibility="Horizontal">
+        <DataGrid.Resources>
+            <Style TargetType="DataGridCell">
+                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+            </Style>
+        </DataGrid.Resources>
         <DataGrid.Columns>
-            <DataGridTextColumn Binding="{x:Null}" ClipboardContentBinding="{x:Null}" Header="Month" Width="10*"/>
-            <DataGridTextColumn Binding="{x:Null}" ClipboardContentBinding="{x:Null}" Header="Employees and total time worked per month" Width="90*"/>
+            <DataGridTextColumn Binding="{Binding YearMonth}" Header="Month" Width="90*"/>
+            <DataGridTextColumn Binding="{Binding WorkerId}" Header="Employee" Width="90*"/>
+            <DataGridTextColumn Binding="{Binding TotalHours}" Header="Total Hours" Width="90*"/>
         </DataGrid.Columns>
     </DataGrid>
 </Window>
