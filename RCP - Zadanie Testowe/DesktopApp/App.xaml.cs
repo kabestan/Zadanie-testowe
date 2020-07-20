@@ -18,6 +18,9 @@ namespace DesktopApp
     {
         private MainWindow mainWindow;
 
+        /// <summary>
+        /// Application starting point.
+        /// </summary>
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             mainWindow = new MainWindow();
