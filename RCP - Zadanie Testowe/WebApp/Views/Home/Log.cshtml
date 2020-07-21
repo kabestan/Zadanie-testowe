@@ -18,43 +18,23 @@
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.RecordId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Timestamp)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.WorkerId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActionType)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LoggerType)
-            </th>
+            <th>@Html.DisplayNameFor(model => model.RecordId)</th>
+            <th>@Html.DisplayNameFor(model => model.Timestamp)</th>
+            <th>@Html.DisplayNameFor(model => model.WorkerId)</th>
+            <th>@Html.DisplayNameFor(model => model.ActionType)</th>
+            <th>@Html.DisplayNameFor(model => model.LoggerType)</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.RecordId)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Timestamp)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.WorkerId)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ActionType)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.LoggerType)
-                </td>
-            </tr>
+        <tr>
+            <td>@Html.DisplayFor(modelItem => item.RecordId)</td>
+            <td>@Html.DisplayFor(modelItem => item.Timestamp)</td>
+            <td>@Html.DisplayFor(modelItem => item.WorkerId)</td>
+            <td>@Html.DisplayFor(modelItem => item.ActionType)</td>
+            <td>@Html.DisplayFor(modelItem => item.LoggerType)</td>
+        </tr>
         }
     </tbody>
 </table>
