@@ -1,16 +1,21 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
+
+// TODO: possible refactor: implement cast operators for Record class
+// TODO: change Record.RecordId type int? to int and correct all dependent code
 
 namespace CommonCode
 {
     public class Record
     {
-        public int? RecordId { get; set; }
-        public DateTime Timestamp { get; set; }
-        public int WorkerId { get; set; }
-        public Activity ActionType { get; set; }
-        public Logger LoggerType { get; set; }
+
+        [DisplayName("Id")] public int? RecordId { get; set; }
+        [DisplayName("Date")] public DateTime Timestamp { get; set; }
+        [DisplayName("Employee")] public int WorkerId { get; set; }
+        [DisplayName("Type")] public Activity ActionType { get; set; }
+        [DisplayName("Logger")] public Logger LoggerType { get; set; }
 
         public enum Activity
         {
@@ -69,7 +74,20 @@ namespace CommonCode
 
         public static Record CreateFromReader(IDataRecord reader)
         {
-            throw new NotImplementedException();
+            Func<string, object> getField = (name) =>
+            {
+                return reader[reader.GetOrdinal(name)];
+            };
+
+            Record record = new Record();
+
+            record.RecordId = Convert.ToInt32(getField("RecordId"));
+            record.Timestamp = Convert.ToDateTime(getField("Timestamp"));
+            record.WorkerId = Convert.ToInt32(getField("WorkerId"));
+            record.ActionType = (Activity)Convert.ToInt32(getField("ActionType"));
+            record.LoggerType = (Logger)Convert.ToInt32(getField("LoggerType"));
+
+            return record;
         }
     }
 }

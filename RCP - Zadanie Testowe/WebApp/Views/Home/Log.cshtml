@@ -1,0 +1,60 @@
+﻿@model IEnumerable<CommonCode.Record>
+
+@{
+    ViewData["Title"] = "Log";
+}
+
+<h1>Log</h1>
+
+<form asp-action="Log" method="get">
+    <p>
+        <a asp-action="Log" asp-route-id="@(1)">First</a><span> | </span>
+        <a asp-action="Log" asp-route-id="@ViewData["idPrev"]">Previous</a>
+        <input name="id" type="number" value="@ViewData["idFirst"]" />
+        <a asp-action="Log" asp-route-id="@ViewData["idNext"]">Next</a><span> | </span>
+        <a asp-action="Log" asp-route-id="@(null)">Last</a>
+    </p>
+</form>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.RecordId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Timestamp)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.WorkerId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ActionType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LoggerType)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.RecordId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Timestamp)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.WorkerId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ActionType)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LoggerType)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -15,6 +15,7 @@ namespace CommonCode
     {
         public delegate Task<DataTable> RequestRecords(int? startingId, int count);
 
+        public const int defaultRecordsIncrement = 100;
         private const string dbName = "RCPdb";
         private static string connectionString = null;
 
@@ -40,6 +41,7 @@ namespace CommonCode
                     await command.ExecuteNonQueryAsync();
                 }
                 connectionString += ";Initial Catalog=" + dbName;
+                return Task.FromResult(true);
             });
         }
 
@@ -51,13 +53,11 @@ namespace CommonCode
         public static async Task<int> UploadRecords(List<Record> records)
         {
             string query = records.Select(ConvertRecordToInsertQuery).Aggregate((a, b) => a + b);
-            int affectedRows = 0;
-            await Connect(async (command) =>
+            return await Connect(async (command) =>
             {
                 command.CommandText = query;
-                affectedRows = await command.ExecuteNonQueryAsync();
+                return await command.ExecuteNonQueryAsync();
             });
-            return affectedRows;
         }
 
         public static async Task<DataTable> CreateReport()
@@ -71,7 +71,35 @@ namespace CommonCode
             });
         }
 
-        public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = 100)
+        public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = defaultRecordsIncrement)
+        {
+            return await WrappedRecordsReader(startingId, howMany, async (reader) =>
+            {
+                var table = new DataTable();
+                table.Columns.Add(new DataColumn("RecordId", typeof(int)));
+                table.Columns.Add(new DataColumn("Timestamp", typeof(DateTime)));
+                table.Columns.Add(new DataColumn("WorkerId", typeof(int)));
+                table.Columns.Add(new DataColumn("ActionType", typeof(Record.Activity)));
+                table.Columns.Add(new DataColumn("LoggerType", typeof(Record.Logger)));
+                table.Load(reader);
+                return table;
+            });
+        }
+
+        public static async Task<List<Record>> DownloadRecordsAsList(int? startingId = null, int howMany = defaultRecordsIncrement)
+        {
+            return await WrappedRecordsReader(startingId, howMany, async (reader) =>
+            {
+                var records = new List<Record>();
+                while (await reader.ReadAsync())
+                {
+                    records.Add(Record.CreateFromReader(reader));
+                }
+                return records;
+            });
+        }
+
+        private static async Task<T> WrappedRecordsReader<T>(int? startingId, int howMany, Func<SqlDataReader, Task<T>> operateOnReader)
         {
             return await Connect(async (command) =>
             {
@@ -79,27 +107,14 @@ namespace CommonCode
                 command.Parameters.Add("start", SqlDbType.Int).Value = startingId == null ? -1 : startingId;
                 command.Parameters.Add("count", SqlDbType.Int).Value = howMany;
 
-                var table = new DataTable();
-                table.Columns.Add(new DataColumn("RecordId", typeof(int)));
-                table.Columns.Add(new DataColumn("Timestamp", typeof(DateTime)));
-                table.Columns.Add(new DataColumn("WorkerId", typeof(int)));
-                table.Columns.Add(new DataColumn("ActionType", typeof(Record.Activity)));
-                table.Columns.Add(new DataColumn("LoggerType", typeof(Record.Logger)));
-                table.Load(await command.ExecuteReaderAsync());
-                return table;
+                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    return await operateOnReader(reader);
+                }
             });
         }
 
-        private static async Task Connect(Func<SqlCommand, Task> callback)
-        {
-            await Connect<object>(async (command) =>
-            {
-                await callback(command);
-                return default;
-            });
-        }
-
-        private static async Task<T> Connect<T>(Func<SqlCommand, Task<T>> callback)
+        private static async Task<T> Connect<T>(Func<SqlCommand, Task<T>> operateOnCommand)
         {
             await InitDatabase();
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -107,7 +122,7 @@ namespace CommonCode
                 await connection.OpenAsync();
                 using (SqlCommand command = new SqlCommand("", connection))
                 {
-                    var t = callback(command);
+                    var t = operateOnCommand(command);
                     Debug.WriteLine($"--- SqlConnection > SqlCommand > CommandText:\n{command.CommandText}");
                     return await t;
                 }
