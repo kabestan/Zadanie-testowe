@@ -79,7 +79,7 @@ namespace CommonCode
         private static async Task InitDatabase()
         {
             if (connectionString != null) return;
-            connectionString = GetConnectionString();
+            connectionString = GetConnectionString(false);
             await Connect(async (command) =>
             {
                 if (await DatabaseExists(command) == false)
@@ -93,7 +93,7 @@ namespace CommonCode
                     command.CommandText = Properties.Resources.InsertDistinctProcedure;
                     await command.ExecuteNonQueryAsync();
                 }
-                connectionString += ";Initial Catalog=" + dbName;
+                connectionString = GetConnectionString();
                 return Task.FromResult(true);
             });
         }
@@ -168,15 +168,16 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
             await command.ExecuteNonQueryAsync();
         }
 
-        private static string GetConnectionString()
+        private static string GetConnectionString(bool withCatalog = true)
         {
-            return "Data Source=(localdb)\\MSSQLLocalDB;" +
+            return @"Data Source=(localdb)\MSSQLLocalDB;" +
                 "Integrated Security=True;" +
                 "Connect Timeout=30;" +
                 "Encrypt=False;" +
                 "TrustServerCertificate=False;" +
                 "ApplicationIntent=ReadWrite;" +
-                "MultiSubnetFailover=False;";
+                "MultiSubnetFailover=False;" +
+                (withCatalog ? $"Initial Catalog={dbName};" : "");
         }
 
         private static string ConvertRecordToInsertQuery(Record r)
