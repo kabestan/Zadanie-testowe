@@ -14,36 +14,10 @@ namespace CommonCode
     public static class DatabaseOperator
     {
         public delegate Task<DataTable> RequestRecords(int? startingId, int count);
-
         public const int defaultRecordsIncrement = 100;
+
         private const string dbName = "RCPdb";
         private static string connectionString = null;
-
-        /// <summary>
-        /// Ensure that database on server is ready to operate.
-        /// </summary>
-        /// <returns>Asynchronous task that will complete after database initialization.s</returns>
-        private static async Task InitDatabase()
-        {
-            if (connectionString != null) return;
-            connectionString = GetConnectionString();
-            await Connect(async (command) =>
-            {
-                if (await DatabaseExists(command) == false)
-                {
-                    // Create database and table
-                    await CreateDatabaseOnServer(command);
-                    command.Connection.ChangeDatabase(dbName);
-                    await CreateTable(command);
-
-                    // Store inserting procedure
-                    command.CommandText = Properties.Resources.InsertDistinctProcedure;
-                    await command.ExecuteNonQueryAsync();
-                }
-                connectionString += ";Initial Catalog=" + dbName;
-                return Task.FromResult(true);
-            });
-        }
 
         /// <summary>
         /// Converts list of records to one string query and sends to server.
@@ -57,17 +31,6 @@ namespace CommonCode
             {
                 command.CommandText = query;
                 return await command.ExecuteNonQueryAsync();
-            });
-        }
-
-        public static async Task<DataTable> CreateReport()
-        {
-            return await Connect(async (command) =>
-            {
-                command.CommandText = Properties.Resources.GetReport;
-                var report = new DataTable();
-                report.Load(await command.ExecuteReaderAsync());
-                return report;
             });
         }
 
@@ -96,6 +59,43 @@ namespace CommonCode
                     records.Add(Record.CreateFromReader(reader));
                 }
                 return records;
+            });
+        }
+
+        public static async Task<DataTable> CreateReport()
+        {
+            return await Connect(async (command) =>
+            {
+                command.CommandText = Properties.Resources.GetReport;
+                var report = new DataTable();
+                report.Load(await command.ExecuteReaderAsync());
+                return report;
+            });
+        }
+
+        /// <summary>
+        /// Ensure that database on server is ready to operate.
+        /// </summary>
+        /// <returns>Asynchronous task that will complete after database initialization.s</returns>
+        private static async Task InitDatabase()
+        {
+            if (connectionString != null) return;
+            connectionString = GetConnectionString();
+            await Connect(async (command) =>
+            {
+                if (await DatabaseExists(command) == false)
+                {
+                    // Create database and table
+                    await CreateDatabaseOnServer(command);
+                    command.Connection.ChangeDatabase(dbName);
+                    await CreateTable(command);
+
+                    // Store inserting procedure
+                    command.CommandText = Properties.Resources.InsertDistinctProcedure;
+                    await command.ExecuteNonQueryAsync();
+                }
+                connectionString += ";Initial Catalog=" + dbName;
+                return Task.FromResult(true);
             });
         }
 
