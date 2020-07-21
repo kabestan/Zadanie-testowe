@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-// TODO: refactor database init to one query
 // TODO: move all queries to Resources
 
 namespace CommonCode
@@ -36,7 +35,7 @@ namespace CommonCode
 
         public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = defaultRecordsIncrement)
         {
-            return await WrappedRecordsReader(startingId, howMany, async (reader) =>
+            return await WrappedRecordsReader(startingId, howMany, (reader) =>
             {
                 var table = new DataTable();
                 table.Columns.Add(new DataColumn("RecordId", typeof(int)));
@@ -45,7 +44,7 @@ namespace CommonCode
                 table.Columns.Add(new DataColumn("ActionType", typeof(Record.Activity)));
                 table.Columns.Add(new DataColumn("LoggerType", typeof(Record.Logger)));
                 table.Load(reader);
-                return table;
+                return Task.FromResult(table);
             });
         }
 
