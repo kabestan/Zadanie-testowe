@@ -24,6 +24,11 @@ namespace DesktopApp
         {
             InitializeComponent();
             TheGrid.ItemsSource = report.DefaultView;
+
+            CollectionView view = (CollectionView)CollectionViewSource.GetDefaultView(TheGrid.ItemsSource);
+            PropertyGroupDescription groupDescription = new PropertyGroupDescription("YearMonth");
+            view.GroupDescriptions.Add(groupDescription);
+
         }
     }
 }

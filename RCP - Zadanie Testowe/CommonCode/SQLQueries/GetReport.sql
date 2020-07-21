@@ -87,4 +87,5 @@ SELECT
 	WorkerId,
 	AccountedTimeMinutes / 60 AS TotalHours 
 FROM @acc 
+WHERE AccountedTimeMinutes / 60 > 0
 ORDER BY OnlyYear, OnlyMonth, WorkerId;
