@@ -32,9 +32,15 @@ namespace CommonCode
             });
         }
 
-        public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = defaultRecordsIncrement)
+        /// <summary>
+        /// Retrieves records from database, starting with id, ordered by id and up to amount, specified by parameters.
+        /// </summary>
+        /// <param name="startingId">Starting id of records group. Select last records if null.</param>
+        /// <param name="amount">Amount of records to retrieve.</param>
+        /// <returns><see cref="DataTable"/> containing selected records.</returns>
+        public static async Task<DataTable> DownloadRecords(int? startingId = null, int amount = defaultRecordsIncrement)
         {
-            return await WrappedRecordsReader(startingId, howMany, (reader) =>
+            return await WrappedRecordsReader(startingId, amount, (reader) =>
             {
                 var table = new DataTable();
                 table.Columns.Add(new DataColumn("RecordId", typeof(int)));
@@ -47,6 +53,12 @@ namespace CommonCode
             });
         }
 
+        /// <summary>
+        /// Retrieves records from database, starting with id, ordered by id and up to amount, specified by parameters.
+        /// </summary>
+        /// <param name="startingId">Starting id of records group. Select last records if null.</param>
+        /// <param name="amount">Amount of records to retrieve.</param>
+        /// <returns><see cref="List{T}"/> containing selected records.</returns>
         public static async Task<List<Record>> DownloadRecordsAsList(int? startingId = null, int howMany = defaultRecordsIncrement)
         {
             return await WrappedRecordsReader(startingId, howMany, async (reader) =>
@@ -60,6 +72,10 @@ namespace CommonCode
             });
         }
 
+        /// <summary>
+        /// Executes query on SQL server to create report according to assignment.
+        /// </summary>
+        /// <returns><see cref="DataTable"/> with created report.</returns>
         public static async Task<DataTable> CreateReport()
         {
             return await Connect(async (command) =>
