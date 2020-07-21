@@ -6,8 +6,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-// TODO: move all queries to Resources
-
 namespace CommonCode
 {
     public static class DatabaseOperator
@@ -17,6 +15,7 @@ namespace CommonCode
 
         private const string dbName = "RCPdb";
         private static string connectionString = null;
+        private static bool DatabaseNotInitialized { get { return connectionString == null; } }
 
         /// <summary>
         /// Converts list of records to one string query and sends to server.
@@ -78,24 +77,26 @@ namespace CommonCode
         /// <returns>Asynchronous task that will complete after database initialization.s</returns>
         private static async Task InitDatabase()
         {
-            if (connectionString != null) return;
-            connectionString = GetConnectionString(false);
-            await Connect(async (command) =>
+            if (DatabaseNotInitialized)
             {
-                if (await DatabaseExists(command) == false)
+                connectionString = GetConnectionString(false);
+                await Connect(async (command) =>
                 {
+                    if (await DatabaseExists(command) == false)
+                    {
                     // Create database and table
                     await CreateDatabaseOnServer(command);
-                    command.Connection.ChangeDatabase(dbName);
-                    await CreateTable(command);
+                        command.Connection.ChangeDatabase(dbName);
+                        await CreateTable(command);
 
                     // Store inserting procedure
                     command.CommandText = Properties.Resources.InsertDistinctProcedure;
-                    await command.ExecuteNonQueryAsync();
-                }
-                connectionString = GetConnectionString();
-                return Task.FromResult(true);
-            });
+                        await command.ExecuteNonQueryAsync();
+                    }
+                    connectionString = GetConnectionString();
+                    return Task.FromResult(true);
+                });
+            }
         }
 
         private static async Task<T> WrappedRecordsReader<T>(int? startingId, int howMany, Func<SqlDataReader, Task<T>> operateOnReader)
