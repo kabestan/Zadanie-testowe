@@ -7,13 +7,24 @@
         mc:Ignorable="d"
         Title="Report" Height="440" Width="270">
     <DataGrid x:Name="TheGrid" AutoGenerateColumns="False" IsReadOnly="true" GridLinesVisibility="Horizontal">
+        <DataGrid.GroupStyle>
+            <GroupStyle>
+                <GroupStyle.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Month " FontSize="14" FontWeight="Bold" Margin="20,5,5,5" />
+                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Bold" Margin="5,5,20,5" />
+                        </StackPanel>
+                    </DataTemplate>
+                </GroupStyle.HeaderTemplate>
+            </GroupStyle>
+        </DataGrid.GroupStyle>
         <DataGrid.Resources>
             <Style TargetType="DataGridCell">
                 <Setter Property="TextBlock.TextAlignment" Value="Center" />
             </Style>
         </DataGrid.Resources>
         <DataGrid.Columns>
-            <DataGridTextColumn Binding="{Binding YearMonth}" Header="Month" Width="90*"/>
             <DataGridTextColumn Binding="{Binding WorkerId}" Header="Employee" Width="90*"/>
             <DataGridTextColumn Binding="{Binding TotalHours}" Header="Total Hours" Width="90*"/>
         </DataGrid.Columns>

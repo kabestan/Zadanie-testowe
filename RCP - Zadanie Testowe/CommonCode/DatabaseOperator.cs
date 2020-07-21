@@ -6,44 +6,16 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-// TODO: refactor database init to one query
-// TODO: move all queries to Resources
-
 namespace CommonCode
 {
     public static class DatabaseOperator
     {
         public delegate Task<DataTable> RequestRecords(int? startingId, int count);
-
         public const int defaultRecordsIncrement = 100;
+
         private const string dbName = "RCPdb";
         private static string connectionString = null;
-
-        /// <summary>
-        /// Ensure that database on server is ready to operate.
-        /// </summary>
-        /// <returns>Asynchronous task that will complete after database initialization.s</returns>
-        private static async Task InitDatabase()
-        {
-            if (connectionString != null) return;
-            connectionString = GetConnectionString();
-            await Connect(async (command) =>
-            {
-                if (await DatabaseExists(command) == false)
-                {
-                    // Create database and table
-                    await CreateDatabaseOnServer(command);
-                    command.Connection.ChangeDatabase(dbName);
-                    await CreateTable(command);
-
-                    // Store inserting procedure
-                    command.CommandText = Properties.Resources.InsertDistinctProcedure;
-                    await command.ExecuteNonQueryAsync();
-                }
-                connectionString += ";Initial Catalog=" + dbName;
-                return Task.FromResult(true);
-            });
-        }
+        private static bool DatabaseNotInitialized { get { return connectionString == null; } }
 
         /// <summary>
         /// Converts list of records to one string query and sends to server.
@@ -60,20 +32,15 @@ namespace CommonCode
             });
         }
 
-        public static async Task<DataTable> CreateReport()
+        /// <summary>
+        /// Retrieves records from database, starting with id, ordered by id and up to amount, specified by parameters.
+        /// </summary>
+        /// <param name="startingId">Starting id of records group. Select last records if null.</param>
+        /// <param name="amount">Amount of records to retrieve.</param>
+        /// <returns><see cref="DataTable"/> containing selected records.</returns>
+        public static async Task<DataTable> DownloadRecords(int? startingId = null, int amount = defaultRecordsIncrement)
         {
-            return await Connect(async (command) =>
-            {
-                command.CommandText = Properties.Resources.GetReport;
-                var report = new DataTable();
-                report.Load(await command.ExecuteReaderAsync());
-                return report;
-            });
-        }
-
-        public static async Task<DataTable> DownloadRecords(int? startingId = null, int howMany = defaultRecordsIncrement)
-        {
-            return await WrappedRecordsReader(startingId, howMany, async (reader) =>
+            return await WrappedRecordsReader(startingId, amount, (reader) =>
             {
                 var table = new DataTable();
                 table.Columns.Add(new DataColumn("RecordId", typeof(int)));
@@ -82,10 +49,16 @@ namespace CommonCode
                 table.Columns.Add(new DataColumn("ActionType", typeof(Record.Activity)));
                 table.Columns.Add(new DataColumn("LoggerType", typeof(Record.Logger)));
                 table.Load(reader);
-                return table;
+                return Task.FromResult(table);
             });
         }
 
+        /// <summary>
+        /// Retrieves records from database, starting with id, ordered by id and up to amount, specified by parameters.
+        /// </summary>
+        /// <param name="startingId">Starting id of records group. Select last records if null.</param>
+        /// <param name="amount">Amount of records to retrieve.</param>
+        /// <returns><see cref="List{T}"/> containing selected records.</returns>
         public static async Task<List<Record>> DownloadRecordsAsList(int? startingId = null, int howMany = defaultRecordsIncrement)
         {
             return await WrappedRecordsReader(startingId, howMany, async (reader) =>
@@ -97,6 +70,49 @@ namespace CommonCode
                 }
                 return records;
             });
+        }
+
+        /// <summary>
+        /// Executes query on SQL server to create report according to assignment.
+        /// </summary>
+        /// <returns><see cref="DataTable"/> with created report.</returns>
+        public static async Task<DataTable> CreateReport()
+        {
+            return await Connect(async (command) =>
+            {
+                command.CommandText = Properties.Resources.GetReport;
+                var report = new DataTable();
+                report.Load(await command.ExecuteReaderAsync());
+                return report;
+            });
+        }
+
+        /// <summary>
+        /// Ensure that database on server is ready to operate.
+        /// </summary>
+        /// <returns>Asynchronous task that will complete after database initialization.s</returns>
+        private static async Task InitDatabase()
+        {
+            if (DatabaseNotInitialized)
+            {
+                connectionString = GetConnectionString(false);
+                await Connect(async (command) =>
+                {
+                    if (await DatabaseExists(command) == false)
+                    {
+                    // Create database and table
+                    await CreateDatabaseOnServer(command);
+                        command.Connection.ChangeDatabase(dbName);
+                        await CreateTable(command);
+
+                    // Store inserting procedure
+                    command.CommandText = Properties.Resources.InsertDistinctProcedure;
+                        await command.ExecuteNonQueryAsync();
+                    }
+                    connectionString = GetConnectionString();
+                    return Task.FromResult(true);
+                });
+            }
         }
 
         private static async Task<T> WrappedRecordsReader<T>(int? startingId, int howMany, Func<SqlDataReader, Task<T>> operateOnReader)
@@ -169,15 +185,16 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
             await command.ExecuteNonQueryAsync();
         }
 
-        private static string GetConnectionString()
+        private static string GetConnectionString(bool withCatalog = true)
         {
-            return "Data Source=(localdb)\\MSSQLLocalDB;" +
+            return @"Data Source=(localdb)\MSSQLLocalDB;" +
                 "Integrated Security=True;" +
                 "Connect Timeout=30;" +
                 "Encrypt=False;" +
                 "TrustServerCertificate=False;" +
                 "ApplicationIntent=ReadWrite;" +
-                "MultiSubnetFailover=False;";
+                "MultiSubnetFailover=False;" +
+                (withCatalog ? $"Initial Catalog={dbName};" : "");
         }
 
         private static string ConvertRecordToInsertQuery(Record r)
