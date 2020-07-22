@@ -23,45 +23,79 @@ namespace DesktopApp
         /// </summary>
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            mainWindow = new MainWindow();
-            mainWindow.ImportButton.Click += OnImportButtonClick;
-            mainWindow.BrowseButton.Click += OnBrowseButtonClick;
-            mainWindow.Show();
+            try
+            {
+                Trace.TraceInformation("Application Startup.");
+                mainWindow = new MainWindow();
+                mainWindow.ImportButton.Click += OnImportButtonClick;
+                mainWindow.BrowseButton.Click += OnBrowseButtonClick;
+                mainWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(ex.Message);
+                ButtonDialog.ShowProblem();
+            }
         }
-        
+
         private async void OnImportButtonClick(object s, RoutedEventArgs e)
         {
-            mainWindow.ImportButton.IsEnabled = false;
-            mainWindow.BrowseButton.IsEnabled = false;
-            await ImportFile((progress) =>
+            try
             {
-                mainWindow.TextField.Text = $"Importing... {(progress * 100):0.0}%";
-            });
-            OnBrowseButtonClick(s, e);
-            mainWindow.ImportButton.IsEnabled = true;
-            mainWindow.BrowseButton.IsEnabled = true;
+                mainWindow.ImportButton.IsEnabled = false;
+                mainWindow.BrowseButton.IsEnabled = false;
+                await ImportFile((progress) =>
+                {
+                    mainWindow.TextField.Text = $"Importing... {(progress * 100):0.0}%";
+                });
+                OnBrowseButtonClick(s, e);
+                mainWindow.ImportButton.IsEnabled = true;
+                mainWindow.BrowseButton.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(ex.Message);
+                ButtonDialog.ShowProblem();
+            }
         }
 
         private void OnBrowseButtonClick(object s, RoutedEventArgs e)
         {
-            mainWindow.Hide();
-            DataViewWindow dataView = new DataViewWindow(DatabaseOperator.DownloadRecords);
-            dataView.Closed += (a, b) => { mainWindow.Show(); };
-            dataView.TheReportButton.Click += OnReportButtonClick;
-            dataView.Show();
+            try
+            {
+                mainWindow.Hide();
+                DataViewWindow dataView = new DataViewWindow(DatabaseOperator.DownloadRecords);
+                dataView.Closed += (a, b) => { mainWindow.Show(); };
+                dataView.TheReportButton.Click += OnReportButtonClick;
+                dataView.Show();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(ex.Message);
+                ButtonDialog.ShowProblem();
+            }
         }
 
         private async void OnReportButtonClick(object sender, RoutedEventArgs e)
         {
-            Button reportButton = sender as Button;
-            reportButton.IsEnabled = false;
-            ReportWindow reportWindow = new ReportWindow(await DatabaseOperator.CreateReport());
-            reportWindow.Closed += (s, f) => { reportButton.IsEnabled = true; };
-            reportWindow.Show();
+            try
+            {
+                Button reportButton = sender as Button;
+                reportButton.IsEnabled = false;
+                ReportWindow reportWindow = new ReportWindow(await DatabaseOperator.CreateReport());
+                reportWindow.Closed += (s, f) => { reportButton.IsEnabled = true; };
+                reportWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(ex.Message);
+                ButtonDialog.ShowProblem();
+            }
         }
 
         private async Task ImportFile(Action<float> ProgressUpdate)
         {
+            Trace.TraceInformation("File import started.");
             OpenFileDialog selectFile = new OpenFileDialog
             {
                 DefaultExt = ".txt",
@@ -74,20 +108,18 @@ namespace DesktopApp
             int recordsParsed = 0;
             int recordsImported = 0;
             int limitRecordsBatchList = 200;
-            Stopwatch middleTime = new Stopwatch();
             Stopwatch totalTime = new Stopwatch();
             totalTime.Start();
+            ProgressUpdate(0);
 
             using (StreamReader reader = new StreamReader(selectFile.OpenFile()))
                 while (true)
                 {
-                    middleTime.Restart();
                     List<Record> records = ReadRecordsToList(limitRecordsBatchList, reader);
                     if (records.Count <= 0) break;
                     recordsParsed += records.Count;
-                    ProgressUpdate(recordsParsed / (float)linesInFile);
                     recordsImported += await DatabaseOperator.UploadRecords(records);
-                    Debug.WriteLine(recordsImported + " - " + middleTime.ElapsedMilliseconds / 1000f);
+                    ProgressUpdate(recordsParsed / (float)linesInFile);
                     if (records.Count < limitRecordsBatchList) break;
                 }
 
