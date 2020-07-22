@@ -139,7 +139,6 @@ namespace CommonCode
                 using (SqlCommand command = new SqlCommand("", connection))
                 {
                     var t = operateOnCommand(command);
-                    Debug.WriteLine($"--- SqlConnection > SqlCommand > CommandText:\n{command.CommandText}");
                     return await t;
                 }
             }
@@ -189,7 +188,7 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
         {
             return @"Data Source=(localdb)\MSSQLLocalDB;" +
                 "Integrated Security=True;" +
-                "Connect Timeout=30;" +
+                "Connect Timeout=15;" +
                 "Encrypt=False;" +
                 "TrustServerCertificate=False;" +
                 "ApplicationIntent=ReadWrite;" +
