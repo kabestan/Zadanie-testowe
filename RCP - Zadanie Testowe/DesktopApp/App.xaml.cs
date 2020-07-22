@@ -93,7 +93,7 @@ namespace DesktopApp
 
             string txt = $"Of {linesInFile} lines in file, {recordsParsed} was parsed and {recordsImported} imported.";
             txt += $" Elapsed {(totalTime.ElapsedMilliseconds / 1000f):0.00}s.";
-            new ButtonDialog(txt, "Ok").ShowDialog();
+            ButtonDialog.Show(txt, "Ok");
         }
 
         private List<Record> ReadRecordsToList(int count, StreamReader reader)

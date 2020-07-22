@@ -21,17 +21,22 @@ namespace DesktopApp
     /// </summary>
     public partial class ButtonDialog : Window
     {
-        public ButtonDialog()
+        private ButtonDialog()
         {
             InitializeComponent();
         }
 
-        public ButtonDialog(string textMessage, string buttonLabel)
+        public static ButtonDialog Show(string textMessage, string buttonLabel)
         {
-            InitializeComponent();
+            ButtonDialog dialog = new ButtonDialog();
+            dialog.TheText.Text = textMessage;
+            dialog.TheButton.Content = buttonLabel;
+            return dialog;
+        }
 
-            TheText.Text = textMessage;
-            TheButton.Content = buttonLabel;
+        public static ButtonDialog ShowProblem()
+        {
+            return Show("There was some trouble. For more info check trace.log file.", "OK");
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
