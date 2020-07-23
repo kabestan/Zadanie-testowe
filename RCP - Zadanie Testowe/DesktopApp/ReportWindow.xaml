@@ -25,7 +25,7 @@
             </Style>
         </DataGrid.Resources>
         <DataGrid.Columns>
-            <DataGridTextColumn Binding="{Binding WorkerId}" Header="Employee" Width="90*"/>
+            <DataGridTextColumn Binding="{Binding RecordWorkerId}" Header="Employee" Width="90*"/>
             <DataGridTextColumn Binding="{Binding TotalHours}" Header="Total Hours" Width="90*"/>
         </DataGrid.Columns>
     </DataGrid>

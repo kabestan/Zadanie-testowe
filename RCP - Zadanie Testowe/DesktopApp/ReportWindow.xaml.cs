@@ -26,7 +26,7 @@ namespace DesktopApp
             TheGrid.ItemsSource = report.DefaultView;
 
             CollectionView view = (CollectionView)CollectionViewSource.GetDefaultView(TheGrid.ItemsSource);
-            PropertyGroupDescription groupDescription = new PropertyGroupDescription("YearMonth");
+            PropertyGroupDescription groupDescription = new PropertyGroupDescription("RecordYearMonth");
             view.GroupDescriptions.Add(groupDescription);
 
         }
