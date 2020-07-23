@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CommonCode
@@ -80,7 +81,9 @@ namespace CommonCode
         {
             return await Connect(async (command) =>
             {
-                command.CommandText = Properties.Resources.GetReport;
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandText = "GetReport";
+                
                 var report = new DataTable();
                 report.Load(await command.ExecuteReaderAsync());
                 return report;
@@ -100,15 +103,19 @@ namespace CommonCode
                 {
                     if (await DatabaseExists(command) == false)
                     {
-                    // Create database and table
-                    await CreateDatabaseOnServer(command);
+                        // Create database and table
+                        await CreateDatabaseOnServer(command);
                         command.Connection.ChangeDatabase(dbName);
                         await CreateTable(command);
 
-                    // Store inserting procedure
-                    command.CommandText = Properties.Resources.InsertDistinctProcedure;
+                        // Store inserting procedure
+                        command.CommandText = Properties.Resources.InsertDistinctProcedure;
                         await command.ExecuteNonQueryAsync();
+
+                        // Store report procedure
+                        await ExecuteQuerySplitByGO(command, Properties.Resources.GetReport);
                     }
+
                     connectionString = GetConnectionString();
                     return Task.FromResult(true);
                 });
@@ -199,6 +206,21 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
         private static string ConvertRecordToInsertQuery(Record r)
         {
              return $"EXEC InsertDistinct @t = '{r.Timestamp}', @w = {r.WorkerId}, @a = {(int)r.ActionType}, @l = {(int)r.LoggerType};\n";
+        }
+
+        private static async Task ExecuteQuerySplitByGO(SqlCommand command, string query)
+        {
+            command.CommandType = CommandType.Text;
+            Regex splitRegEx = new Regex(@"\s+GO\s+");
+            List<string> queries = splitRegEx.Split(query.Trim()).Where(q => q != null).ToList();
+
+            foreach (string singleBatch in queries)
+            {
+                Debug.WriteLine($"--- Query split on 'GO' for seperate batch:\n{singleBatch}");
+
+                command.CommandText = singleBatch;
+                await command.ExecuteNonQueryAsync();
+            }
         }
     }
  }
