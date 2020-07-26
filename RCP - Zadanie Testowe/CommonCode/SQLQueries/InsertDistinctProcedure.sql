@@ -1,11 +1,17 @@
-CREATE PROCEDURE InsertDistinct @t DATETIME, @w INT, @a INT, @l INT
+CREATE OR ALTER FUNCTION RecordLikeThis (@RecordDateTime DATETIME, @RecordWorkerId INT, @RecordType INT, @RecordSource INT)
+RETURNS TABLE
+RETURN SELECT * 
+	FROM RCPdb.dbo.RCPlogs
+	WHERE Timestamp = @RecordDateTime
+	AND WorkerId = @RecordWorkerId
+	AND ActionType = @RecordType
+	AND LoggerType = @RecordSource
+GO
+
+CREATE OR ALTER PROCEDURE InsertDistinct (@RecordDateTime DATETIME, @RecordWorkerId INT, @RecordType INT, @RecordSource INT)
 AS
-INSERT INTO RCPdb.dbo.RCPlogs (Timestamp, WorkerId, ActionType, LoggerType)
-SELECT @t, @w, @a, @l WHERE NOT EXISTS 
-(
-	SELECT null FROM RCPdb.dbo.RCPlogs r WHERE r.Timestamp = @t
-	AND r.WorkerId = @w
-	AND r.ActionType = @a
-	AND r.LoggerType = @l
-)
+IF NOT EXISTS(SELECT * FROM RecordLikeThis(@RecordDateTime, @RecordWorkerId, @RecordType, @RecordSource))
+	INSERT INTO RCPdb.dbo.RCPlogs (Timestamp, WorkerId, ActionType, LoggerType)
+	VALUES (@RecordDateTime, @RecordWorkerId, @RecordType, @RecordSource)
+
 --EXEC InsertDistinct @t = '2018-06-25 07:48:00', @w = 0, @a = 0, @l = 0;

@@ -205,7 +205,7 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
 
         private static string ConvertRecordToInsertQuery(Record r)
         {
-             return $"EXEC InsertDistinct @t = '{r.Timestamp}', @w = {r.WorkerId}, @a = {(int)r.ActionType}, @l = {(int)r.LoggerType};\n";
+             return $"EXEC InsertDistinct @RecordDateTime = '{r.Timestamp}', @RecordWorkerId = {r.WorkerId}, @RecordType = {(int)r.ActionType}, @RecordSource = {(int)r.LoggerType};\n";
         }
 
         private static async Task ExecuteQuerySplitByGO(SqlCommand command, string query)
