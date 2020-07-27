@@ -103,14 +103,12 @@ namespace CommonCode
                 {
                     if (await DatabaseExists(command) == false)
                     {
-                        // Create database and table
-                        await CreateDatabaseOnServer(command);
+                        // Create database structure
+                        await ExecuteQuerySplitByGO(command, Properties.Resources.CreateDatabaseStructure);
                         command.Connection.ChangeDatabase(dbName);
-                        await CreateTable(command);
 
                         // Store inserting procedure
-                        command.CommandText = Properties.Resources.InsertDistinctProcedure;
-                        await command.ExecuteNonQueryAsync();
+                        await ExecuteQuerySplitByGO(command, Properties.Resources.InsertDistinctProcedure);
 
                         // Store report procedure
                         await ExecuteQuerySplitByGO(command, Properties.Resources.GetReport);
@@ -171,26 +169,6 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
             }
         }
 
-        private static async Task CreateDatabaseOnServer(SqlCommand command)
-        {
-            command.CommandText = $"CREATE DATABASE {dbName};";
-            await command.ExecuteNonQueryAsync();
-        }
-
-        private static async Task CreateTable(SqlCommand command)
-        {
-            command.CommandText =
-@"CREATE TABLE [RCPlogs]
-(
-	[RecordId] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-	[Timestamp] SMALLDATETIME NOT NULL,
-    [WorkerId] INT NOT NULL, 
-    [ActionType] TINYINT NOT NULL, 
-    [LoggerType] TINYINT NOT NULL
-)";
-            await command.ExecuteNonQueryAsync();
-        }
-
         private static string GetConnectionString(bool withCatalog = true)
         {
             return @"Data Source=(localdb)\MSSQLLocalDB;" +
@@ -205,7 +183,7 @@ WHERE ('[' + name + ']' = @dbname OR name = @dbname)";
 
         private static string ConvertRecordToInsertQuery(Record r)
         {
-             return $"EXEC InsertDistinct @t = '{r.Timestamp}', @w = {r.WorkerId}, @a = {(int)r.ActionType}, @l = {(int)r.LoggerType};\n";
+             return $"EXEC InsertDistinct @RecordDateTime = '{r.Timestamp}', @RecordWorkerId = {r.WorkerId}, @RecordType = {(int)r.ActionType}, @RecordSource = {(int)r.LoggerType};\n";
         }
 
         private static async Task ExecuteQuerySplitByGO(SqlCommand command, string query)

@@ -1,11 +1,13 @@
-CREATE PROCEDURE InsertDistinct @t DATETIME, @w INT, @a INT, @l INT
+CREATE OR ALTER FUNCTION NextRecordId()
+RETURNS INT
+BEGIN 
+	DECLARE @nextId INT = 0;
+	SELECT @nextId = ISNULL(MAX(RecordId), 0) + 1 FROM RCPdb.dbo.RCPlogs;
+	RETURN @nextId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE InsertDistinct (@RecordDateTime DATETIME, @RecordWorkerId INT, @RecordType INT, @RecordSource INT)
 AS
-INSERT INTO RCPdb.dbo.RCPlogs (Timestamp, WorkerId, ActionType, LoggerType)
-SELECT @t, @w, @a, @l WHERE NOT EXISTS 
-(
-	SELECT null FROM RCPdb.dbo.RCPlogs r WHERE r.Timestamp = @t
-	AND r.WorkerId = @w
-	AND r.ActionType = @a
-	AND r.LoggerType = @l
-)
---EXEC InsertDistinct @t = '2018-06-25 07:48:00', @w = 0, @a = 0, @l = 0;
+INSERT INTO RCPdb.dbo.RCPlogs (RecordId, Timestamp, WorkerId, ActionType, LoggerType)
+	VALUES (RCPdb.dbo.NextRecordId(), @RecordDateTime, @RecordWorkerId, @RecordType, @RecordSource);
