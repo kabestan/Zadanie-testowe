@@ -85,6 +85,37 @@ namespace CommonCode.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to DROP DATABASE IF EXISTS [RCPdb];
+        ///CREATE DATABASE [RCPdb];
+        ///GO
+        ///USE [RCPdb];
+        ///
+        ///CREATE TABLE [RCPlogs]
+        ///(
+        ///	[RecordId]		INT				NOT NULL PRIMARY KEY,
+        ///	[Timestamp]		SMALLDATETIME	NOT NULL,
+        ///    [WorkerId]		INT				NOT NULL, 
+        ///    [ActionType]	TINYINT			NOT NULL, 
+        ///    [LoggerType]	TINYINT			NOT NULL
+        ///)
+        ///
+        ///DROP INDEX IF EXISTS RCPlogs.uniqueRecords;
+        ///CREATE UNIQUE NONCLUSTERED INDEX uniqueRecords
+        ///ON RCPlogs (
+        ///	Timestamp ASC,
+        ///	WorkerId ASC,
+        ///	ActionType ASC,
+        ///	LoggerType ASC)
+        ///WITH(
+        ///	IGNORE_DUP_KEY = ON);.
+        /// </summary>
+        internal static string CreateDatabaseStructure {
+            get {
+                return ResourceManager.GetString("CreateDatabaseStructure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to --DECLARE @start int, @count int; SET @start = -1; SET @count = 100;
         ///IF @start &lt; 0
         ///	SET @start = (SELECT MAX([RecordId]) - @count + 1 FROM[RCPlogs]);
@@ -97,11 +128,27 @@ namespace CommonCode.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SELECT a.Month FROM
-        ///	(SELECT (CAST(YEAR(Timestamp) AS VARCHAR(4)) + &apos;-&apos; + CAST(MONTH(Timestamp) AS VARCHAR(2))) AS Month FROM RCPdb.dbo.RCPlogs) a
-        ///GROUP BY Month;
-        ///--SELECT * FROM RCPdb.dbo.RCPlogs 
-        ///--ORDER BY Timestamp;.
+        ///   Looks up a localized string similar to CREATE OR ALTER VIEW dateTimeSplit AS
+        ///	SELECT 
+        ///		Timestamp AS RecordDateTime,
+        ///		YEAR(Timestamp) AS RecordYear,
+        ///		MONTH(Timestamp) AS RecordMonth,
+        ///		WorkerId AS RecordWorkerId,
+        ///		LoggerType AS RecordSource,
+        ///		ActionType AS RecordType
+        ///	FROM 
+        ///		RCPlogs
+        ///	WHERE 
+        ///		ActionType = 0 -- &apos;entry&apos;
+        ///		OR ActionType = 1 -- &apos;exit&apos;
+        ///		OR ActionType = 5 -- &apos;exitAux&apos;
+        ///GO
+        ///
+        ///CREATE OR ALTER FUNCTION RecordsOfWorker (@RecordWorkerId INT)
+        ///RETURNS TABLE
+        ///RETURN SELECT 
+        ///		*,
+        ///		LAG(RecordType) OVER(ORDER BY RecordDate [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string GetReport {
             get {
@@ -110,19 +157,20 @@ namespace CommonCode.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to --DECLARE @t VARCHAR(32), @w INT, @a INT, @l INT;
-        ///--SET @t = &apos;2000-01-01 00:01:00&apos;; SET @w = 1; SET @a = 0; SET @l = 0;
-        ///CREATE PROCEDURE InsertDistinct @t DATETIME, @w INT, @a INT, @l INT
+        ///   Looks up a localized string similar to CREATE OR ALTER FUNCTION NextRecordId()
+        ///RETURNS INT
+        ///BEGIN 
+        ///	DECLARE @nextId INT = 0;
+        ///	SELECT @nextId = ISNULL(MAX(RecordId), 0) + 1 FROM RCPdb.dbo.RCPlogs;
+        ///	RETURN @nextId;
+        ///END
+        ///GO
+        ///
+        ///CREATE OR ALTER PROCEDURE InsertDistinct (@RecordDateTime DATETIME, @RecordWorkerId INT, @RecordType INT, @RecordSource INT)
         ///AS
-        ///	INSERT INTO RCPdb.dbo.RCPlogs (Timestamp, WorkerId, ActionType, LoggerType)
-        ///	SELECT @t, @w, @a, @l WHERE NOT EXISTS 
-        ///	(
-        ///			SELECT null FROM RCPdb.dbo.RCPlogs r WHERE r.Timestamp = @t
-        ///			AND r.WorkerId = @w
-        ///			AND r.ActionType = @a
-        ///			AND r.LoggerType = @l
-        ///	)
-        ///GO;.
+        ///INSERT INTO RCPdb.dbo.RCPlogs (RecordId, Timestamp, WorkerId, ActionType, LoggerType)
+        ///	VALUES (RCPdb.dbo.NextRecordId(), @RecordDateTime, @RecordWorkerId, @RecordType, @RecordSource);
+        ///.
         /// </summary>
         internal static string InsertDistinctProcedure {
             get {
